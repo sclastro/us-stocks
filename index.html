@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -92,13 +91,20 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 }
 .qtick:hover{background:var(--accent-l);border-color:var(--accent);color:var(--accent)}
 
-/* ── State cards ────────────────────────── */
+/* ── Error state ────────────────────────── */
 .state-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:60px 24px;text-align:center;box-shadow:var(--sh)}
 .state-ico{font-size:32px;margin-bottom:14px}
 .state-ttl{font-size:15px;font-weight:600;color:var(--t2);margin-bottom:6px}
 .state-desc{font-size:13.5px;color:var(--t4);max-width:380px;margin:0 auto;line-height:1.65;white-space:pre-wrap}
-.spin{display:inline-block;width:32px;height:32px;border:2.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;margin-bottom:14px}
-@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Skeleton shimmer ───────────────────── */
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{
+  display:inline-block;vertical-align:middle;
+  background:linear-gradient(90deg,#efefed 25%,#e5e5e3 50%,#efefed 75%);
+  background-size:1200px 100%;
+  animation:shimmer 1.6s infinite linear;
+}
 
 /* ── Cards ──────────────────────────────── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh)}
@@ -117,9 +123,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 @media(max-width:600px){.stk-id .nm{font-size:18px}}
 .price-area{text-align:right}
 @media(max-width:500px){.price-area{text-align:left}}
-.price-main{font-size:38px;font-weight:700;letter-spacing:-1.5px;line-height:1;color:var(--t1)}
+.price-main{font-size:38px;font-weight:700;letter-spacing:-1.5px;line-height:1;color:var(--t1);min-height:38px}
 @media(max-width:600px){.price-main{font-size:30px}}
-.price-delta{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:600;margin-top:8px;padding:4px 10px;border-radius:6px}
+.price-delta{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:600;margin-top:8px;padding:4px 10px;border-radius:6px;min-height:30px}
 .price-delta.up{color:var(--green);background:var(--green-l)}
 .price-delta.down{color:var(--red);background:var(--red-l)}
 
@@ -129,7 +135,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .stat{background:var(--surface);padding:14px 16px}
 .stat:hover{background:var(--surface2)}
 .stat-k{font-size:10.5px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
-.stat-v{font-size:15px;font-weight:600;color:var(--t1)}
+.stat-v{font-size:15px;font-weight:600;color:var(--t1);min-height:22px;display:flex;align-items:center}
 
 /* ── Chart card ─────────────────────────── */
 .period-grp{display:flex;flex-wrap:wrap;gap:4px}
@@ -140,18 +146,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 }
 .per-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
 .per-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.chart-wrap{position:relative;padding:14px 0 0}
-.chart-container{margin:0 24px 24px;height:350px;border-radius:var(--rs);overflow:hidden}
-@media(max-width:600px){.chart-container{margin:0 16px 16px;height:260px}}
-/* overlay for loading/error inside chart */
-.chart-overlay{
+.chart-wrap{position:relative;padding:14px 24px 24px}
+.tv-chart{display:block;width:100%;height:420px;border:none;border-radius:var(--rs);transition:opacity .25s}
+.tv-chart.tv-loading{opacity:0}
+.chart-loader{
   position:absolute;inset:14px 24px 24px;border-radius:var(--rs);
-  background:rgba(255,255,255,.94);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:10px;
-  font-size:13.5px;color:var(--t3);z-index:5;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  font-size:13.5px;color:var(--t3);pointer-events:none;
 }
-.chart-overlay .spin{margin:0}
-@media(max-width:600px){.chart-overlay{inset:14px 16px 16px}}
+.chart-loader[hidden]{display:none!important}
+.chart-spin{width:28px;height:28px;border:2.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .chart-wrap{padding:14px 16px 16px}
+  .tv-chart{height:300px}
+  .chart-loader{inset:14px 16px 16px}
+}
 
 /* ── News card ──────────────────────────── */
 .news-hdr{padding:18px 24px 16px;border-bottom:1px solid var(--border)}
@@ -224,15 +235,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     </div>
   </section>
 
-  <!-- Loading -->
-  <div id="st-load" hidden>
-    <div class="state-card">
-      <div class="spin"></div>
-      <div class="state-ttl">正在查詢股票數據</div>
-      <div class="state-desc">透過 Finnhub API 獲取即時行情…</div>
-    </div>
-  </div>
-
   <!-- Error -->
   <div id="st-err" hidden>
     <div class="state-card">
@@ -242,7 +244,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- Results (shown immediately with skeletons on search) -->
   <div id="results" hidden>
 
     <!-- Quote -->
@@ -250,22 +252,22 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
       <div class="cb">
         <div class="q-top">
           <div class="stk-id">
-            <div class="sym"  id="r-sym">—</div>
-            <div class="nm"   id="r-name">—</div>
+            <div class="sym"  id="r-sym"></div>
+            <div class="nm"   id="r-name"></div>
             <div class="sec"  id="r-sec"></div>
           </div>
           <div class="price-area">
-            <div class="price-main"  id="r-price">—</div>
-            <div class="price-delta" id="r-delta">—</div>
+            <div class="price-main"  id="r-price"></div>
+            <div class="price-delta" id="r-delta"></div>
           </div>
         </div>
         <div class="stats-grid">
-          <div class="stat"><div class="stat-k">今日最高</div><div class="stat-v" id="r-high">—</div></div>
-          <div class="stat"><div class="stat-k">今日最低</div><div class="stat-v" id="r-low">—</div></div>
-          <div class="stat"><div class="stat-k">開市價</div>  <div class="stat-v" id="r-open">—</div></div>
-          <div class="stat"><div class="stat-k">昨日收市</div><div class="stat-v" id="r-prev">—</div></div>
-          <div class="stat"><div class="stat-k">成交量</div>  <div class="stat-v" id="r-vol">—</div></div>
-          <div class="stat"><div class="stat-k">市值</div>    <div class="stat-v" id="r-cap">—</div></div>
+          <div class="stat"><div class="stat-k">今日最高</div><div class="stat-v" id="r-high"></div></div>
+          <div class="stat"><div class="stat-k">今日最低</div><div class="stat-v" id="r-low"></div></div>
+          <div class="stat"><div class="stat-k">開市價</div>  <div class="stat-v" id="r-open"></div></div>
+          <div class="stat"><div class="stat-k">昨日收市</div><div class="stat-v" id="r-prev"></div></div>
+          <div class="stat"><div class="stat-k">成交量</div>  <div class="stat-v" id="r-vol"></div></div>
+          <div class="stat"><div class="stat-k">市值</div>    <div class="stat-v" id="r-cap"></div></div>
         </div>
       </div>
     </div>
@@ -284,8 +286,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
         </div>
       </div>
       <div class="chart-wrap">
-        <div class="chart-overlay" id="chart-overlay" hidden></div>
-        <div id="chart-container" class="chart-container"></div>
+        <div id="tv-loader" class="chart-loader">
+          <div class="chart-spin"></div>
+          <span>圖表載入中…</span>
+        </div>
+        <iframe id="tv-chart" class="tv-chart tv-loading" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
       </div>
     </div>
 
@@ -306,15 +311,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 /* ── Config ──────────────────────────────────────── */
 const FH_KEY  = 'd806uhhr01qj3ct99a30d806uhhr01qj3ct99a3g';
 const FH_BASE = 'https://finnhub.io/api/v1';
-const AV_KEY  = 'AXIHIXW8BDLWJU87';
-const AV_BASE = 'https://www.alphavantage.co/query';
 
 /* ── State ───────────────────────────────────────── */
 const $ = id => document.getElementById(id);
-let tvChart      = null;   // LightweightCharts instance
-let candleSeries = null;   // candlestick series
-let roChart      = null;   // ResizeObserver for chart
-let avTimeSeries = null;   // Alpha Vantage TIME_SERIES_DAILY full history
 let newsData     = [];
 let activePeriod = '1M';
 let currentSym   = '';
@@ -332,7 +331,6 @@ function fmtVol(n) {
 }
 
 function fmtCap(millions) {
-  // Finnhub marketCapitalization is in millions USD
   const n = parseFloat(millions) * 1e6;
   if (!n || isNaN(n)) return '—';
   return n>=1e12?'$'+(n/1e12).toFixed(2)+'T' : n>=1e9?'$'+(n/1e9).toFixed(2)+'B' : n>=1e6?'$'+(n/1e6).toFixed(2)+'M' : '$'+n;
@@ -349,24 +347,6 @@ function tsToDate(ts) {
   return new Date(ts * 1000).toISOString().slice(0, 10);
 }
 
-// Cutoff date string 'YYYY-MM-DD' for a given period
-function periodCutoffDate(period) {
-  const d    = new Date();
-  const days = {'1M':30,'3M':90,'6M':180,'1Y':365,'3Y':1095,'5Y':1825}[period] || 30;
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
-/* ── UI State ────────────────────────────────────── */
-function setState(s) {
-  $('st-load').hidden = s !== 'loading';
-  $('st-err').hidden  = s !== 'error';
-  $('results').hidden = s !== 'results';
-  const btn = $('srch-btn');
-  btn.disabled    = s === 'loading';
-  btn.textContent = s === 'loading' ? '查詢中…' : '查詢';
-}
-
 /* ── Finnhub API ─────────────────────────────────── */
 async function fhFetch(path) {
   const sep = path.includes('?') ? '&' : '?';
@@ -381,14 +361,59 @@ async function fhFetch(path) {
   return data;
 }
 
-/* ── Alpha Vantage API (chart data only) ─────────── */
-async function avFetch(params) {
-  const res  = await fetch(`${AV_BASE}?${params}&apikey=${AV_KEY}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  if (data.Note)        throw new Error('Alpha Vantage 請求次數超限，請稍後再試。');
-  if (data.Information) throw new Error('Alpha Vantage: ' + data.Information);
-  return data;
+/* ── News with auto-retry on empty ──────────────── */
+async function fetchNews(sym) {
+  const now = Math.floor(Date.now() / 1000);
+  const to  = tsToDate(now);
+
+  // First attempt: 60 days
+  try {
+    const data = await fhFetch(`company-news?symbol=${sym}&from=${tsToDate(now - 60*86400)}&to=${to}`);
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch { /* fall through */ }
+
+  // Auto-retry: extend to 180 days
+  try {
+    const data = await fhFetch(`company-news?symbol=${sym}&from=${tsToDate(now - 180*86400)}&to=${to}`);
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch { /* fall through */ }
+
+  return [];
+}
+
+/* ── Skeleton helpers ────────────────────────────── */
+// Inline shimmer block: width, height, corner-radius
+const sk = (w, h, r = '4px') =>
+  `<span class="sk" style="width:${w};height:${h};border-radius:${r}"></span>`;
+
+// Block-level shimmer line
+const skb = (w, h = '14px', mb = '8px') =>
+  `<div class="sk" style="display:block;width:${w};height:${h};border-radius:4px;margin-bottom:${mb}"></div>`;
+
+function showQuoteSkeleton() {
+  $('r-sym').innerHTML   = sk('46px', '11px', '3px');
+  $('r-name').innerHTML  = sk('190px', '22px');
+  $('r-sec').innerHTML   = sk('130px', '12px', '3px');
+  $('r-price').innerHTML = sk('155px', '38px');
+  const d = $('r-delta');
+  d.className = 'price-delta';
+  d.innerHTML = sk('105px', '22px', '6px');
+  ['r-high','r-low','r-open','r-prev','r-vol','r-cap'].forEach(id =>
+    $(id).innerHTML = sk('68px', '14px')
+  );
+}
+
+function showNewsSkeleton() {
+  $('news-list').innerHTML = Array(3).fill(0).map(() => `
+    <div class="news-item" style="pointer-events:none;user-select:none">
+      <div class="n-top" style="margin-bottom:10px">
+        ${sk('58px','10px','3px')}
+        ${sk('82px','10px','3px')}
+      </div>
+      ${skb('86%','15px','6px')}
+      ${skb('68%','15px','6px')}
+      ${skb('48%','12px','0')}
+    </div>`).join('');
 }
 
 /* ── Search ──────────────────────────────────────── */
@@ -398,61 +423,61 @@ async function doSearch() {
   const sym = $('sym-input').value.trim().toUpperCase();
   if (!sym) return;
 
-  // Cleanup previous chart
-  destroyChart();
   currentSym   = sym;
-  avTimeSeries = null;
   newsData     = [];
   activePeriod = '1M';
 
-  setState('loading');
+  // Disable button
+  const btn = $('srch-btn');
+  btn.disabled    = true;
+  btn.textContent = '查詢中…';
 
-  const now           = Math.floor(Date.now() / 1000);
-  const thirtyDaysAgo = now - 31 * 86400;
+  // ① Show results immediately with skeletons
+  $('st-err').hidden  = true;
+  $('results').hidden = false;
+  showQuoteSkeleton();
+  showNewsSkeleton();
 
+  // Reset period buttons; show chart loader at once
+  document.querySelectorAll('.per-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.per-btn').classList.add('active');
+  $('tv-loader').hidden = false;
+  $('tv-chart').classList.add('tv-loading');
+  $('tv-chart').onload = null;
+  $('tv-chart').src = '';
+
+  // ② Fire all fetches simultaneously
+  const quoteP   = fhFetch(`quote?symbol=${sym}`);
+  const profileP = fhFetch(`stock/profile2?symbol=${sym}`).catch(() => ({}));
+  const newsP    = fetchNews(sym);
+
+  // ③ Quote + Profile → render quote card first (fast path)
+  let quote, profile;
   try {
-    // Finnhub: quote + profile + news in parallel (60 req/min limit)
-    const [qr, pr, nr] = await Promise.allSettled([
-      fhFetch(`quote?symbol=${sym}`),
-      fhFetch(`stock/profile2?symbol=${sym}`),
-      fhFetch(`company-news?symbol=${sym}&from=${tsToDate(thirtyDaysAgo)}&to=${tsToDate(now)}`),
-    ]);
-
-    if (qr.status === 'rejected') throw qr.reason;
-    const quote = qr.value;
-
+    [quote, profile] = await Promise.all([quoteP, profileP]);
     if (!quote.pc || quote.pc === 0) {
       throw new Error(`找不到股票代碼「${sym}」。\n請確認代碼是否正確（例如 AAPL、TSLA、GOOGL）`);
     }
-
-    const profile = pr.status === 'fulfilled' ? pr.value : {};
-    newsData      = (nr.status === 'fulfilled' && Array.isArray(nr.value)) ? nr.value : [];
-
-    // Alpha Vantage: full daily history for chart (separate key, 25 req/day)
-    try {
-      const avData = await avFetch(`function=TIME_SERIES_DAILY&symbol=${sym}&outputsize=full`);
-      avTimeSeries = avData['Time Series (Daily)'] || null;
-    } catch (e) {
-      console.warn('Alpha Vantage chart data failed:', e.message);
-      avTimeSeries = null;
-    }
-
-    setState('results');
-    renderQuote(quote, profile, sym);
-    renderNews();
-
-    // Reset period buttons
-    document.querySelectorAll('.per-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.per-btn').classList.add('active');
-
-    // Force browser layout then build chart
-    $('chart-container').getBoundingClientRect();
-    buildChart();
-    plotPeriod('1M');
-
   } catch (err) {
-    setState('error');
+    $('results').hidden = true;
+    $('st-err').hidden  = false;
     $('err-msg').textContent = err.message || '查詢失敗，請稍後再試';
+    btn.disabled    = false;
+    btn.textContent = '查詢';
+    return;
+  }
+
+  renderQuote(quote, profile, sym);
+  updateTVChart();               // ← chart starts loading now
+  btn.disabled    = false;
+  btn.textContent = '查詢';
+
+  // ④ News renders whenever it's ready (non-blocking)
+  try {
+    const news = await newsP;
+    if (currentSym === sym) { newsData = news; renderNews(); }
+  } catch {
+    if (currentSym === sym) renderNews();
   }
 }
 
@@ -460,9 +485,9 @@ async function doSearch() {
 function renderQuote(q, p, sym) {
   const isUp = (q.d || 0) >= 0;
 
-  $('r-sym').textContent  = sym;
-  $('r-name').textContent = p.name || sym;
-  $('r-sec').textContent  = [p.finnhubIndustry, p.exchange].filter(Boolean).join(' · ');
+  $('r-sym').textContent   = sym;
+  $('r-name').textContent  = p.name || sym;
+  $('r-sec').textContent   = [p.finnhubIndustry, p.exchange].filter(Boolean).join(' · ');
   $('r-price').textContent = fmt$(q.c);
 
   const d = $('r-delta');
@@ -473,125 +498,63 @@ function renderQuote(q, p, sym) {
   $('r-low').textContent  = fmt$(q.l);
   $('r-open').textContent = fmt$(q.o);
   $('r-prev').textContent = fmt$(q.pc);
-
-  // Volume from most recent Alpha Vantage entry
-  if (avTimeSeries) {
-    const lastDate = Object.keys(avTimeSeries).sort().at(-1);
-    $('r-vol').textContent = lastDate ? fmtVol(avTimeSeries[lastDate]['5. volume']) : '—';
-  } else {
-    $('r-vol').textContent = '—';
-  }
-
-  $('r-cap').textContent = p.marketCapitalization ? fmtCap(p.marketCapitalization) : '—';
+  $('r-vol').textContent  = '—';
+  $('r-cap').textContent  = p.marketCapitalization ? fmtCap(p.marketCapitalization) : '—';
 }
 
-/* ── Chart ───────────────────────────────────────── */
-function destroyChart() {
-  if (roChart)  { roChart.disconnect(); roChart = null; }
-  if (tvChart)  { tvChart.remove(); tvChart = null; candleSeries = null; }
-  // Clear container's inner HTML in case TradingView left orphaned elements
-  const c = $('chart-container');
-  if (c) c.innerHTML = '';
+/* ── Chart (TradingView Widget) ──────────────────── */
+const TV_RANGE    = {'1M':'1M',  '3M':'3M',  '6M':'6M',  '1Y':'12M', '3Y':'36M', '5Y':'60M'};
+const TV_INTERVAL = {'1M':'D',   '3M':'D',   '6M':'D',   '1Y':'W',   '3Y':'W',   '5Y':'M'  };
+
+function buildTVUrl(sym, period) {
+  const p = new URLSearchParams({
+    symbol:              sym,
+    interval:            TV_INTERVAL[period] || 'D',
+    range:               TV_RANGE[period]    || '1M',
+    theme:               'light',
+    style:               '1',
+    locale:              'zh_TW',
+    timezone:            'Asia/Hong_Kong',
+    toolbar_bg:          'ffffff',
+    hide_side_toolbar:   '0',
+    allow_symbol_change: '1',
+    save_image:          '0',
+    hideideas:           '1',
+    hide_top_toolbar:    '0',
+  });
+  return 'https://www.tradingview.com/widgetembed/?' + p.toString();
 }
 
-function buildChart() {
-  destroyChart();
-  const container = $('chart-container');
-  const w = container.clientWidth  || 800;
-  const h = container.clientHeight || 350;
-
-  tvChart = LightweightCharts.createChart(container, {
-    width:  w,
-    height: h,
-    layout: {
-      background:  { color: '#ffffff' },
-      textColor:   '#9ca3af',
-      fontSize:    11,
-      fontFamily:  'Inter, -apple-system, sans-serif',
-    },
-    grid: {
-      vertLines: { color: '#f5f5f3' },
-      horzLines: { color: '#f5f5f3' },
-    },
-    crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color: '#d97706', labelBackgroundColor: '#d97706' },
-      horzLine: { color: '#d97706', labelBackgroundColor: '#d97706' },
-    },
-    rightPriceScale: { borderColor: '#e5e5e3' },
-    timeScale: {
-      borderColor:     '#e5e5e3',
-      timeVisible:     true,
-      secondsVisible:  false,
-      fixLeftEdge:     true,
-      fixRightEdge:    true,
-    },
-  });
-
-  candleSeries = tvChart.addCandlestickSeries({
-    upColor:        '#16a34a',
-    downColor:      '#dc2626',
-    borderUpColor:  '#16a34a',
-    borderDownColor:'#dc2626',
-    wickUpColor:    '#16a34a',
-    wickDownColor:  '#dc2626',
-  });
-
-  // Responsive resize
-  roChart = new ResizeObserver(entries => {
-    if (tvChart && entries[0]) {
-      tvChart.applyOptions({ width: entries[0].contentRect.width });
-    }
-  });
-  roChart.observe(container);
-}
-
-function plotPeriod(period) {
-  activePeriod = period;
-  if (!tvChart || !candleSeries) return;
-
-  if (!avTimeSeries) {
-    showOverlay('⚠ 走勢數據暫不可用（Alpha Vantage 每天限 25 次）');
-    return;
-  }
-
-  const cutoff  = periodCutoffDate(period); // 'YYYY-MM-DD'
-  const candles = Object.entries(avTimeSeries)
-    .filter(([date]) => date >= cutoff)
-    .map(([date, bar]) => ({
-      time:  date,
-      open:  parseFloat(bar['1. open']),
-      high:  parseFloat(bar['2. high']),
-      low:   parseFloat(bar['3. low']),
-      close: parseFloat(bar['4. close']),
-    }))
-    .sort((a, b) => a.time < b.time ? -1 : 1);
-
-  if (!candles.length) { showOverlay('此時間範圍暫無數據'); return; }
-
-  hideOverlay();
-  candleSeries.setData(candles);
-  tvChart.timeScale().fitContent();
+function updateTVChart() {
+  if (!currentSym) return;
+  const sym    = currentSym;
+  const frame  = $('tv-chart');
+  const loader = $('tv-loader');
+  loader.hidden = false;
+  frame.classList.add('tv-loading');
+  frame.onload = () => {
+    if (currentSym !== sym) return;  // stale load — ignore
+    frame.classList.remove('tv-loading');
+    loader.hidden = true;
+  };
+  frame.src = buildTVUrl(sym, activePeriod);
 }
 
 function switchPeriod(period, btn) {
+  activePeriod = period;
   document.querySelectorAll('.per-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  plotPeriod(period);
+  updateTVChart();
 }
-
-function showOverlay(msg, loading = false) {
-  const el = $('chart-overlay');
-  el.innerHTML = loading ? `<div class="spin"></div><span>${msg}</span>` : msg;
-  el.hidden = false;
-}
-function hideOverlay() { $('chart-overlay').hidden = true; }
 
 /* ── Render: News ────────────────────────────────── */
 function renderNews() {
   const el = $('news-list');
   if (!newsData.length) {
-    el.innerHTML = '<div style="padding:28px 24px;text-align:center;color:var(--t4);font-size:13.5px;">暫無近期相關新聞</div>';
+    el.innerHTML = `
+      <div style="padding:32px 24px;text-align:center;color:var(--t4);font-size:13.5px;line-height:1.7">
+        暫時未有最新新聞，請稍後再試
+      </div>`;
     return;
   }
   el.innerHTML = newsData.slice(0, 10).map((item, i) => {
@@ -634,7 +597,6 @@ async function doTranslate(i) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Response structure: [[[translatedSegment, original, ...], ...], null, 'en', ...]
     const translated = data[0].map(seg => seg[0]).join('');
     if (!translated) throw new Error('空白回應');
 
