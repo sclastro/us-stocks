@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=NVDA&apikey=AXIHIXW8BDLWJU87\")",
+      "Bash(curl -s \"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=NVDA&outputsize=compact&apikey=AXIHIXW8BDLWJU87\")",
+      "Bash(curl -s \"https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=NVDA&apikey=AXIHIXW8BDLWJU87\")",
+      "Bash(curl -s \"https://finnhub.io/api/v1/quote?symbol=AAPL&token=YOUR_FINNHUB_KEY\")",
+      "Bash(curl -s \"https://finnhub.io/api/v1/stock/candle?symbol=AAPL&resolution=D&from=1746057600&to=1748304000&token=YOUR_FINNHUB_KEY\")",
+      "Bash(curl -s \"https://finnhub.io/api/v1/company-news?symbol=AAPL&from=2026-04-19&to=2026-05-19&token=YOUR_FINNHUB_KEY\")",
+      "Bash(curl -sI \"https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js\")",
+      "Bash(dir *)"
+    ]
+  }
+}
