@@ -522,6 +522,7 @@ async function doSearch() {
   }
 
   renderQuote(quote, profile, sym);
+  updateStarBtn();
   updateTVChart();               // ← chart starts loading now
   btn.disabled    = false;
   btn.textContent = '查詢';
