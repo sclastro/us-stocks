@@ -8,7 +8,8 @@
       "Bash(curl -s \"https://finnhub.io/api/v1/stock/candle?symbol=AAPL&resolution=D&from=1746057600&to=1748304000&token=YOUR_FINNHUB_KEY\")",
       "Bash(curl -s \"https://finnhub.io/api/v1/company-news?symbol=AAPL&from=2026-04-19&to=2026-05-19&token=YOUR_FINNHUB_KEY\")",
       "Bash(curl -sI \"https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js\")",
-      "Bash(dir *)"
+      "Bash(dir *)",
+      "WebFetch(domain:api.anthropic.com)"
     ]
   }
 }
