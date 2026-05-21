@@ -374,6 +374,7 @@ let currentSym   = '';
 /* ── Boot ────────────────────────────────────────── */
 $('sym-input').addEventListener('input',   e => { e.target.value = e.target.value.toUpperCase(); });
 $('sym-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+renderWatchlist();
 
 /* ── Helpers ─────────────────────────────────────── */
 const fmt$ = n => '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
