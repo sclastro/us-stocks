@@ -635,6 +635,56 @@ function renderNews() {
   }).join('');
 }
 
+/* ── Watchlist ───────────────────────────────────── */
+function wlLoad() {
+  try { return JSON.parse(localStorage.getItem('stocklens_wl') || '[]'); }
+  catch { return []; }
+}
+
+function wlSave(arr) {
+  localStorage.setItem('stocklens_wl', JSON.stringify(arr));
+}
+
+function renderWatchlist() {
+  const arr   = wlLoad();
+  const sec   = $('wl-section');
+  const chips = $('wl-chips');
+  if (!arr.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  chips.innerHTML = arr.map(sym =>
+    `<span class="wl-chip" onclick="qs('${esc(sym)}')">
+       ${esc(sym)}
+       <button class="wl-rm" title="移除" onclick="event.stopPropagation();wlRemove('${esc(sym)}')">×</button>
+     </span>`
+  ).join('');
+}
+
+function toggleWatchlist() {
+  if (!currentSym) return;
+  const arr = wlLoad();
+  const idx = arr.indexOf(currentSym);
+  if (idx === -1) arr.push(currentSym);
+  else arr.splice(idx, 1);
+  wlSave(arr);
+  renderWatchlist();
+  updateStarBtn();
+}
+
+function wlRemove(sym) {
+  wlSave(wlLoad().filter(s => s !== sym));
+  renderWatchlist();
+  if (currentSym === sym) updateStarBtn();
+}
+
+function updateStarBtn() {
+  const btn = $('star-btn');
+  if (!btn || !currentSym) return;
+  const on = wlLoad().includes(currentSym);
+  btn.className           = 'star-btn' + (on ? ' starred' : '');
+  $('star-ico').textContent = on ? '★' : '☆';
+  $('star-lbl').textContent = on ? '已加入自選' : '加入自選';
+}
+
 /* ── Translate (Google Translate unofficial) ─────── */
 async function doTranslate(i) {
   const item  = newsData[i];
