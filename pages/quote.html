@@ -220,6 +220,10 @@ document.querySelectorAll('.lang-toggle button').forEach(b => {
   });
 });
 
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => qs(c.dataset.sym));
+});
+
 document.querySelectorAll('.tf-btn').forEach(btn => {
   btn.addEventListener('click', () => switchPeriod(btn.dataset.period, btn));
 });
