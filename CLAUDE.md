@@ -138,6 +138,23 @@ netlify dev
 | `stocklens.watchlist` | `["AAPL","TSLA",...]`，自選清單 |
 | `stocklens.lang` | `"zh"` 或 `"en"` |
 
+## quote.html 指數模式
+
+`quote.html` 自動判斷是否為指數/商品/匯率：
+- Symbol 開頭為 `^`（指數）→ index mode
+- Symbol 包含 `=F`（期貨）或 `=X`（匯率）→ index mode
+- URL 帶 `type=index` 且 symbol 匹配 → index mode
+
+Index mode 行為：
+- 呼叫 `API.getIndexQuote(sym)`（Yahoo Finance proxy）
+- 隱藏自選按鈕、新聞面板
+- 圖表使用 `TV_SYMBOL_MAP` 對應到 TradingView symbol；無對應則隱藏圖表
+- 數字格式：匯率 4 位小數、商品/指數 2 位小數 + 千位分隔符
+- VIX 顯示「高波動 >20」/「低波動 <20」（中性灰色），不顯示升跌顏色
+
+`TV_SYMBOL_MAP` 涵蓋：美股指數(5)、亞洲(9)、歐洲(8)、其他(3)、商品(9)、匯率(9)
+無對應的 symbol（越南VNINDEX、沙特TASI、南非JSE、阿根廷MERVAL、URA、CNY=X 等）→ 隱藏圖表區塊
+
 ## Netlify 部署設定
 
 1. 在 Netlify Dashboard → Site Settings → Environment Variables 加入：
