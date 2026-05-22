@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockLens — 自選清單</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="quote.html">
+      <div class="logo-mark" aria-hidden="true"></div>
+      <span><b>Stock</b><span class="dim">Lens</span></span>
+    </a>
+    <div class="nav-tabs">
+      <a href="quote.html"     class="nav-tab"        data-i18n="nav_quote">股票查詢</a>
+      <a href="etf.html"       class="nav-tab"        data-i18n="nav_etf">ETF</a>
+      <a href="indices.html"   class="nav-tab"        data-i18n="nav_indices">環球指數</a>
+      <a href="watchlist.html" class="nav-tab active"  data-i18n="nav_watchlist">
+        自選清單 <span class="wl-badge" id="wlBadge" hidden>0</span>
+      </a>
+      <a href="portfolio.html" class="nav-tab"        data-i18n="nav_portfolio">持倉</a>
+    </div>
+    <div class="nav-right">
+      <span class="mkt-pill"><span class="dot"></span><span data-i18n="market_open">市場開市</span></span>
+      <div class="lang-toggle" id="langToggle">
+        <button type="button" data-lang="zh">繁中</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+  <div class="wl-page-head">
+    <div>
+      <h1 data-i18n="wl_page_title">自選清單</h1>
+      <div class="wl-sub" data-i18n="wl_subtitle">點擊股票查看詳情</div>
+    </div>
+    <div class="wl-actions">
+      <span class="wl-status" id="wlStatus"></span>
+      <button class="wl-clear-all" id="clearAllBtn" data-i18n="wl_clear" hidden>清除全部</button>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="wlEmpty" hidden>
+    <div class="state-card">
+      <div class="state-ico">⭐</div>
+      <div class="state-ttl" data-i18n="wl_empty">自選清單為空</div>
+      <div class="state-desc" data-i18n="wl_empty_sub">在股票查詢頁搜尋，然後點擊「加入自選」</div>
+      <a href="quote.html" class="state-link" data-i18n="nav_quote">股票查詢</a>
+    </div>
+  </div>
+
+  <!-- Watchlist table -->
+  <div id="wlTable" class="wl-table" hidden>
+    <div class="wl-table-head">
+      <span data-i18n="nav_quote">股票</span>
+      <span class="col-r" data-i18n="wl_price">最新價</span>
+      <span class="col-r col-chg" data-i18n="wl_change">升跌</span>
+      <span></span>
+    </div>
+    <div id="wlRows"></div>
+  </div>
+</main>
+
+<footer>
+  <div data-i18n="footer_left">StockLens · 僅供研究及教育用途，不構成投資建議。</div>
+  <div><span data-i18n="footer_delay">報價延遲約 15 分鐘</span> · <a href="#" data-i18n="footer_terms">服務條款</a></div>
+</footer>
+
+<!-- Mobile Bottom Nav -->
+<nav class="bottom-nav">
+  <a href="quote.html"     class="bn-item">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span>查詢</span>
+  </a>
+  <a href="etf.html"       class="bn-item">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>ETF</span>
+  </a>
+  <a href="indices.html"   class="bn-item">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
+    <span>指數</span>
+  </a>
+  <a href="watchlist.html" class="bn-item active">
+    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span>自選</span>
+  </a>
+  <a href="portfolio.html" class="bn-item">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span>持倉</span>
+  </a>
+</nav>
+
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+
+/* ── Live price cache ────────────────────────────── */
+const priceCache = {};
+
+/* ── Boot ────────────────────────────────────────── */
+applyLang();
+updateWlBadge();
+renderPage();
+
+document.querySelectorAll('.lang-toggle button').forEach(b => {
+  b.addEventListener('click', () => { setLang(b.dataset.lang); renderPage(); });
+});
+
+$('clearAllBtn').addEventListener('click', () => {
+  if (!confirm(tr('wl_clear') + '？')) return;
+  watchlist.clear();
+  saveWatchlist();
+  updateWlBadge();
+  renderPage();
+});
+
+/* ── Render page ─────────────────────────────────── */
+function renderPage(){
+  const syms = [...watchlist];
+  $('clearAllBtn').hidden = syms.length === 0;
+
+  if (syms.length === 0) {
+    $('wlEmpty').hidden = false;
+    $('wlTable').hidden = true;
+    $('wlStatus').textContent = '';
+    return;
+  }
+  $('wlEmpty').hidden = true;
+  $('wlTable').hidden = false;
+  renderRows(syms);
+  fetchAllPrices(syms);
+}
+
+/* ── Render rows (skeleton first) ────────────────── */
+function renderRows(syms){
+  $('wlRows').innerHTML = syms.map(sym => {
+    const cached = priceCache[sym];
+    return rowHTML(sym, cached);
+  }).join('');
+
+  $('wlRows').querySelectorAll('.wl-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const sym = btn.dataset.sym;
+      watchlist.delete(sym);
+      saveWatchlist();
+      updateWlBadge();
+      renderPage();
+    });
+  });
+}
+
+function rowHTML(sym, data){
+  const priceStr = data ? fmt$(data.c) : `<span class="sk" style="width:72px;height:14px;border-radius:3px"></span>`;
+  const chgClass = data ? (data.dp > 0 ? 'up' : data.dp < 0 ? 'dn' : 'neu') : 'loading';
+  const chgStr   = data
+    ? `${data.dp >= 0 ? '+' : ''}${data.dp.toFixed(2)}% (${data.d >= 0 ? '+' : ''}${Math.abs(data.d).toFixed(2)})`
+    : '—';
+
+  return `
+<a href="quote.html?symbol=${sym}" class="wl-row" data-sym="${sym}">
+  <div class="wl-sym-col">
+    <div class="wl-sym-logo">${sym.slice(0,2)}</div>
+    <div>
+      <div class="wl-sym-name">${sym}</div>
+      <div class="wl-sym-fullname" id="wlname-${sym}">—</div>
+    </div>
+  </div>
+  <div class="wl-price-col" id="wlprice-${sym}">${priceStr}</div>
+  <div class="wl-chg-col">
+    <span class="wl-chg ${chgClass}" id="wlchg-${sym}">${chgStr}</span>
+  </div>
+  <div class="wl-remove-col">
+    <button class="wl-remove" data-sym="${sym}" title="移除" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+</a>`;
+}
+
+/* ── Fetch live prices (batched 300ms) ───────────── */
+async function fetchAllPrices(syms){
+  $('wlStatus').textContent = tr('wl_updating');
+  let done = 0;
+
+  for (const sym of syms) {
+    try {
+      const [q, p] = await Promise.all([
+        API.getQuote(sym),
+        API.getCompanyProfile(sym).catch(() => ({}))
+      ]);
+      priceCache[sym] = q;
+      updateRowPrice(sym, q, p);
+    } catch { /* skip */ }
+    done++;
+    $('wlStatus').textContent = `${tr('wl_updating')} ${done}/${syms.length}`;
+    if (done < syms.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  $('wlStatus').textContent = tr('wl_updated');
+}
+
+function updateRowPrice(sym, q, p){
+  const priceEl = document.getElementById(`wlprice-${sym}`);
+  const chgEl   = document.getElementById(`wlchg-${sym}`);
+  const nameEl  = document.getElementById(`wlname-${sym}`);
+  if (!priceEl || !chgEl) return;
+
+  priceEl.textContent = fmt$(q.c);
+
+  const up = q.dp >= 0;
+  chgEl.className = `wl-chg ${up ? 'up' : q.dp < 0 ? 'dn' : 'neu'}`;
+  chgEl.textContent = `${up?'+':''}${q.dp.toFixed(2)}% (${q.d>=0?'+':''}${Math.abs(q.d).toFixed(2)})`;
+
+  if (nameEl && p.name) nameEl.textContent = p.name;
+}
+</script>
+</body>
+</html>
