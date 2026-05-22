@@ -197,9 +197,10 @@
 
 /* ── State ───────────────────────────────────────── */
 const $ = id => document.getElementById(id);
-let newsData     = [];
-let activePeriod = '1M';
-let currentSym   = '';
+let newsData      = [];
+let activePeriod  = '1M';
+let currentSym    = '';
+let currentIdxMode = false;
 
 /* ── Boot ────────────────────────────────────────── */
 applyLang();
