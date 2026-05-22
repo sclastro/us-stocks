@@ -106,50 +106,119 @@ const GROUPS = [
         id: 'us_index',
         label: { zh: '美股指數', en: 'US Index' },
         etfs: [
-          { sym: 'SPY',  name: { zh: '標普500 ETF',      en: 'S&P 500 ETF' }},
-          { sym: 'QQQ',  name: { zh: '納斯達克100 ETF',  en: 'Nasdaq-100 ETF' }},
-          { sym: 'DIA',  name: { zh: '道瓊工業指數 ETF', en: 'Dow Jones ETF' }},
-          { sym: 'IWM',  name: { zh: '羅素2000 ETF',     en: 'Russell 2000 ETF' }},
-          { sym: 'VTI',  name: { zh: '全美股市 ETF',     en: 'Total Market ETF' }},
+          { sym: 'SPY',  name: '標普500指數ETF',       desc: '追蹤美國500大企業，全球最大ETF' },
+          { sym: 'QQQ',  name: '納斯達克100指數ETF',   desc: '追蹤納指100，科技股比重高' },
+          { sym: 'DIA',  name: '道瓊工業平均指數ETF',  desc: '追蹤30隻道指藍籌股' },
+          { sym: 'IWM',  name: '羅素2000小型股ETF',    desc: '美國2000隻小型股，反映中小企業表現' },
+          { sym: 'VTI',  name: '全美股票市場ETF',      desc: '涵蓋美國全市場逾3500隻股票' },
+          { sym: 'VOO',  name: 'Vanguard標普500ETF',   desc: '低費用追蹤標普500指數' },
+          { sym: 'IVV',  name: 'iShares核心標普500ETF', desc: '費用率極低的標普500指數基金' },
+          { sym: 'SCHB', name: '嘉信全美股市ETF',      desc: '覆蓋美國大中小型股，費率極低' },
         ]
       },
       {
         id: 'tech',
         label: { zh: '科技', en: 'Tech' },
         etfs: [
-          { sym: 'XLK',  name: { zh: '科技類股精選 ETF', en: 'Tech Select Sector ETF' }},
-          { sym: 'SOXX', name: { zh: '費城半導體 ETF',   en: 'Semiconductor ETF' }},
-          { sym: 'ARKK', name: { zh: 'ARK 創新 ETF',     en: 'ARK Innovation ETF' }},
-          { sym: 'IGV',  name: { zh: '軟件科技 ETF',     en: 'Software & Services ETF' }},
+          { sym: 'XLK',  name: '科技精選類股ETF',      desc: '追蹤標普500科技類股，含蘋果微軟' },
+          { sym: 'SOXX', name: '費城半導體ETF',         desc: '追蹤半導體行業龍頭企業' },
+          { sym: 'ARKK', name: 'ARK創新ETF',            desc: '主動管理，聚焦顛覆性創新科技' },
+          { sym: 'IGV',  name: '軟件與服務ETF',         desc: '追蹤全球軟件及互聯網服務企業' },
+          { sym: 'SMH',  name: '半導體ETF',             desc: '追蹤25隻最大型半導體公司' },
+          { sym: 'CIBR', name: '網絡安全ETF',           desc: '聚焦全球網絡安全行業企業' },
+          { sym: 'ROBO', name: '機器人及自動化ETF',     desc: '追蹤機器人、自動化及AI相關公司' },
+        ]
+      },
+      {
+        id: 'healthcare',
+        label: { zh: '醫療', en: 'Healthcare' },
+        etfs: [
+          { sym: 'XLV',  name: '醫療保健精選類股ETF',  desc: '涵蓋醫藥、生技、醫療設備龍頭' },
+          { sym: 'IBB',  name: '生物科技ETF',           desc: '追蹤納斯達克生物科技指數' },
+          { sym: 'XBI',  name: '標普生物科技ETF',       desc: '等權重配置生物科技中小型企業' },
+          { sym: 'IHI',  name: '醫療器械ETF',           desc: '追蹤美國醫療設備及器械公司' },
+          { sym: 'ARKG', name: 'ARK基因組革命ETF',      desc: '聚焦基因組學及精準醫療創新企業' },
+        ]
+      },
+      {
+        id: 'finance',
+        label: { zh: '金融', en: 'Finance' },
+        etfs: [
+          { sym: 'XLF',  name: '金融精選類股ETF',       desc: '涵蓋銀行、保險、資產管理龍頭' },
+          { sym: 'KRE',  name: '地區銀行ETF',           desc: '追蹤美國中小型地區銀行' },
+          { sym: 'IAI',  name: '經紀商及交易所ETF',     desc: '聚焦券商、交易所及金融交易企業' },
+        ]
+      },
+      {
+        id: 'energy',
+        label: { zh: '能源', en: 'Energy' },
+        etfs: [
+          { sym: 'XLE',  name: '能源精選類股ETF',       desc: '涵蓋石油、天然氣龍頭企業' },
+          { sym: 'XOP',  name: '石油天然氣勘探ETF',     desc: '追蹤石油天然氣勘探與生產公司' },
+          { sym: 'ICLN', name: '全球清潔能源ETF',       desc: '追蹤全球清潔能源及可再生能源企業' },
+          { sym: 'TAN',  name: '太陽能ETF',             desc: '聚焦全球太陽能產業鏈企業' },
+        ]
+      },
+      {
+        id: 'consumer',
+        label: { zh: '消費', en: 'Consumer' },
+        etfs: [
+          { sym: 'XLY',  name: '非必需消費品ETF',       desc: '涵蓋亞馬遜、特斯拉等消費龍頭' },
+          { sym: 'XLP',  name: '必需消費品ETF',         desc: '追蹤食品、飲料、日用品龍頭' },
+          { sym: 'ONLN', name: '網上零售ETF',           desc: '聚焦全球電子商務及網絡零售商' },
+        ]
+      },
+      {
+        id: 'industrial',
+        label: { zh: '工業', en: 'Industrial' },
+        etfs: [
+          { sym: 'XLI',  name: '工業精選類股ETF',       desc: '涵蓋航空、國防、機械製造龍頭' },
+          { sym: 'ITA',  name: '航空航天及國防ETF',     desc: '追蹤美國航空航天和國防工業公司' },
         ]
       },
       {
         id: 'bonds',
         label: { zh: '債券', en: 'Bonds' },
         etfs: [
-          { sym: 'TLT',  name: { zh: '20年期美債 ETF',   en: '20+ Year Treasury ETF' }},
-          { sym: 'BND',  name: { zh: '全市場債券 ETF',   en: 'Total Bond Market ETF' }},
-          { sym: 'AGG',  name: { zh: '核心美債綜合 ETF', en: 'Core US Bond ETF' }},
-          { sym: 'HYG',  name: { zh: '高收益公司債 ETF', en: 'High Yield Bond ETF' }},
-          { sym: 'LQD',  name: { zh: '投資級公司債 ETF', en: 'Investment Grade Bond ETF' }},
+          { sym: 'TLT',  name: '20年期以上美國國債ETF', desc: '追蹤長期美國國債，利率敏感度高' },
+          { sym: 'IEF',  name: '7-10年期美國國債ETF',   desc: '追蹤中期美國國債' },
+          { sym: 'SHY',  name: '1-3年期美國國債ETF',    desc: '追蹤短期美國國債，波動最低' },
+          { sym: 'BND',  name: '全美債券市場ETF',        desc: '涵蓋美國整體債券市場' },
+          { sym: 'AGG',  name: '核心美國綜合債券ETF',    desc: 'iShares旗艦債券ETF，廣泛分散' },
+          { sym: 'HYG',  name: '高收益企業債ETF',        desc: '追蹤美國高收益（垃圾）債券市場' },
+          { sym: 'LQD',  name: '投資級企業債ETF',        desc: '追蹤美國投資級企業債券' },
+          { sym: 'TIP',  name: '通脹保值國債ETF',        desc: '追蹤美國TIPS，對沖通脹風險' },
         ]
       },
       {
         id: 'commodities',
         label: { zh: '商品', en: 'Commodities' },
         etfs: [
-          { sym: 'GLD',  name: { zh: 'SPDR 黃金 ETF',    en: 'SPDR Gold ETF' }},
-          { sym: 'SLV',  name: { zh: 'iShares 白銀 ETF', en: 'iShares Silver ETF' }},
-          { sym: 'USO',  name: { zh: '美國石油 ETF',      en: 'US Oil Fund' }},
-          { sym: 'DJP',  name: { zh: '彭博商品 ETN',      en: 'Bloomberg Commodity ETN' }},
+          { sym: 'GLD',  name: 'SPDR黃金股份ETF',       desc: '全球最大黃金ETF，直接持有實物黃金' },
+          { sym: 'IAU',  name: 'iShares黃金信託ETF',    desc: '費率低於GLD的黃金實物ETF' },
+          { sym: 'SLV',  name: 'iShares白銀信託ETF',    desc: '追蹤白銀現貨價格' },
+          { sym: 'GDX',  name: '黃金礦業股ETF',         desc: '追蹤大型黃金及白銀礦業公司' },
+          { sym: 'USO',  name: '美國石油基金',           desc: '追蹤WTI輕質原油期貨價格' },
+          { sym: 'DBA',  name: '農業商品ETF',            desc: '追蹤小麥、玉米、大豆等農業期貨' },
         ]
       },
       {
         id: 'realestate',
         label: { zh: '房地產', en: 'Real Estate' },
         etfs: [
-          { sym: 'VNQ',  name: { zh: 'Vanguard 房地產 ETF',  en: 'Vanguard REIT ETF' }},
-          { sym: 'IYR',  name: { zh: 'iShares 美國地產 ETF', en: 'iShares Real Estate ETF' }},
+          { sym: 'VNQ',  name: 'Vanguard房地產ETF',     desc: '追蹤美國房地產投資信託（REIT）' },
+          { sym: 'IYR',  name: 'iShares美國房地產ETF',  desc: '追蹤道瓊斯美國房地產指數' },
+          { sym: 'XLRE', name: '房地產精選類股ETF',      desc: '追蹤標普500房地產類股' },
+        ]
+      },
+      {
+        id: 'leveraged',
+        label: { zh: '槓桿反向', en: 'Leveraged' },
+        etfs: [
+          { sym: 'TQQQ', name: '納指100三倍做多ETF',    desc: '每日追蹤納指100三倍正向報酬' },
+          { sym: 'SQQQ', name: '納指100三倍做空ETF',    desc: '每日追蹤納指100三倍反向報酬' },
+          { sym: 'SPXL', name: '標普500三倍做多ETF',    desc: '每日追蹤標普500三倍正向報酬' },
+          { sym: 'SPXS', name: '標普500三倍做空ETF',    desc: '每日追蹤標普500三倍反向報酬' },
         ]
       },
     ]
@@ -162,44 +231,78 @@ const GROUPS = [
         id: 'usa',
         label: { zh: '美國', en: 'United States' },
         etfs: [
-          { sym: 'VOO',  name: { zh: 'Vanguard 標普500 ETF',   en: 'Vanguard S&P 500 ETF' }},
-          { sym: 'IVV',  name: { zh: 'iShares 核心標普500 ETF', en: 'iShares Core S&P 500 ETF' }},
-          { sym: 'SCHB', name: { zh: '嘉信全美股市 ETF',        en: 'Schwab US Broad Market ETF' }},
+          { sym: 'SPY',  name: '標普500指數ETF',        desc: '追蹤美國500大企業，全球最大ETF' },
+          { sym: 'QQQ',  name: '納斯達克100指數ETF',    desc: '追蹤納指100，科技股比重高' },
+          { sym: 'VTI',  name: '全美股票市場ETF',       desc: '涵蓋美國全市場逾3500隻股票' },
+          { sym: 'IWM',  name: '羅素2000小型股ETF',     desc: '美國2000隻小型股，反映中小企業表現' },
         ]
       },
       {
         id: 'global',
         label: { zh: '全球', en: 'Global' },
         etfs: [
-          { sym: 'VT',   name: { zh: 'Vanguard 全球股票 ETF',   en: 'Vanguard Total World ETF' }},
-          { sym: 'ACWI', name: { zh: 'iShares MSCI 全球 ETF',   en: 'iShares MSCI ACWI ETF' }},
-          { sym: 'EFA',  name: { zh: 'iShares 已開發市場 ETF',  en: 'Developed Markets ETF' }},
+          { sym: 'VT',   name: 'Vanguard全球股票ETF',   desc: '涵蓋全球47個市場逾9000隻股票' },
+          { sym: 'ACWI', name: 'iShares MSCI全球ETF',   desc: '追蹤MSCI全球指數，含發達及新興市場' },
+          { sym: 'EFA',  name: 'iShares MSCI已開發市場ETF', desc: '追蹤美國以外已開發市場股票' },
+          { sym: 'IXUS', name: 'iShares核心MSCI國際ETF', desc: '美國以外全球廣泛分散投資' },
         ]
       },
       {
         id: 'emerging',
         label: { zh: '新興市場', en: 'Emerging' },
         etfs: [
-          { sym: 'EEM',  name: { zh: 'iShares MSCI 新興市場 ETF', en: 'iShares MSCI EM ETF' }},
-          { sym: 'VWO',  name: { zh: 'Vanguard 新興市場 ETF',     en: 'Vanguard EM ETF' }},
+          { sym: 'EEM',  name: 'iShares MSCI新興市場ETF', desc: '涵蓋中國、印度、巴西等新興市場' },
+          { sym: 'VWO',  name: 'Vanguard新興市場ETF',   desc: '費率較低的新興市場指數基金' },
+          { sym: 'IEMG', name: 'iShares核心MSCI新興市場ETF', desc: '比EEM涵蓋更多中小型新興市場股' },
+          { sym: 'DEM',  name: '新興市場高息股ETF',     desc: '追蹤新興市場高股息股票' },
         ]
       },
       {
-        id: 'asia',
-        label: { zh: '亞洲', en: 'Asia' },
+        id: 'china',
+        label: { zh: '中國', en: 'China' },
         etfs: [
-          { sym: 'EWJ',  name: { zh: 'iShares MSCI 日本 ETF', en: 'iShares MSCI Japan ETF' }},
-          { sym: 'KWEB', name: { zh: '中國互聯網 ETF',          en: 'China Internet ETF' }},
-          { sym: 'FXI',  name: { zh: '中國大型股 ETF',           en: 'China Large-Cap ETF' }},
-          { sym: 'EWH',  name: { zh: 'iShares MSCI 香港 ETF',   en: 'iShares MSCI Hong Kong ETF' }},
+          { sym: 'FXI',  name: '中國大型股ETF',         desc: '追蹤中國50隻最大型H股及紅籌股' },
+          { sym: 'KWEB', name: '中國互聯網ETF',         desc: '聚焦在美上市中國互聯網公司' },
+          { sym: 'MCHI', name: 'iShares MSCI中國ETF',   desc: '廣泛追蹤MSCI中國指數' },
+          { sym: 'CQQQ', name: '中國科技ETF',           desc: '追蹤中國科技、媒體及電訊類股' },
+        ]
+      },
+      {
+        id: 'japan',
+        label: { zh: '日本', en: 'Japan' },
+        etfs: [
+          { sym: 'EWJ',  name: 'iShares MSCI日本ETF',   desc: '追蹤日本大中型上市股票' },
+          { sym: 'DXJ',  name: '日本股票對沖匯率ETF',   desc: '日股投資同時對沖日元匯率風險' },
+          { sym: 'DBJP', name: 'Xtrackers MSCI日本ETF', desc: '追蹤MSCI日本指數並對沖匯率' },
+        ]
+      },
+      {
+        id: 'apac',
+        label: { zh: '亞太其他', en: 'Asia-Pacific' },
+        etfs: [
+          { sym: 'EWH',  name: 'iShares MSCI香港ETF',   desc: '追蹤香港交易所上市大型股票' },
+          { sym: 'EWY',  name: 'iShares MSCI韓國ETF',   desc: '追蹤韓國大中型上市股票' },
+          { sym: 'EWT',  name: 'iShares MSCI台灣ETF',   desc: '追蹤台灣大中型上市股票' },
+          { sym: 'EWA',  name: 'iShares MSCI澳洲ETF',   desc: '追蹤澳洲大中型上市股票' },
         ]
       },
       {
         id: 'europe',
         label: { zh: '歐洲', en: 'Europe' },
         etfs: [
-          { sym: 'VGK',  name: { zh: 'Vanguard 歐洲股票 ETF',   en: 'Vanguard European ETF' }},
-          { sym: 'EZU',  name: { zh: 'iShares MSCI 歐元區 ETF', en: 'iShares MSCI Eurozone ETF' }},
+          { sym: 'VGK',  name: 'Vanguard歐洲股票ETF',   desc: '追蹤歐洲已開發市場大中型股票' },
+          { sym: 'EZU',  name: 'iShares MSCI歐元區ETF', desc: '追蹤歐元區已開發市場股票' },
+          { sym: 'EWG',  name: 'iShares MSCI德國ETF',   desc: '追蹤德國大中型上市股票' },
+          { sym: 'EWU',  name: 'iShares MSCI英國ETF',   desc: '追蹤英國大中型上市股票' },
+        ]
+      },
+      {
+        id: 'latam',
+        label: { zh: '拉丁美洲', en: 'Latin America' },
+        etfs: [
+          { sym: 'ILF',  name: 'iShares拉丁美洲40ETF',  desc: '追蹤拉丁美洲40隻最大型股票' },
+          { sym: 'EWZ',  name: 'iShares MSCI巴西ETF',   desc: '追蹤巴西大中型上市股票' },
+          { sym: 'EWW',  name: 'iShares MSCI墨西哥ETF', desc: '追蹤墨西哥大中型上市股票' },
         ]
       },
     ]
@@ -216,8 +319,7 @@ const priceCache  = {};
 const $ = id => document.getElementById(id);
 const activeGroup = () => GROUPS.find(g => g.id === activeGroupId);
 const activeCat   = () => activeGroup().cats.find(c => c.id === activeCatId);
-const lbl  = obj => obj.label[currentLang] || obj.label.zh;
-const ename = etf => etf.name[currentLang]  || etf.name.zh;
+const lbl = obj => obj.label[currentLang] || obj.label.zh;
 
 /* ── Render ──────────────────────────────────────── */
 function renderAll() {
@@ -267,10 +369,8 @@ function renderGrid() {
   $('etfCount').textContent = `${etfs.length} ETFs`;
   setStatus('');
 
-  // Render cards — show cached data or skeleton for price/change
   $('etfGrid').innerHTML = etfs.map(etf => cardHTML(etf, priceCache[etf.sym])).join('');
 
-  // Only fetch what isn't cached yet
   const uncached = etfs.filter(e => !priceCache[e.sym]);
   if (uncached.length) loadPrices(uncached, gen);
 }
@@ -286,7 +386,8 @@ function cardHTML(etf, data) {
   return `
 <a href="quote.html?symbol=${etf.sym}" class="etf-card">
   <div class="etf-card-sym">${etf.sym}</div>
-  <div class="etf-card-name">${ename(etf)}</div>
+  <div class="etf-card-name">${etf.name}</div>
+  <div class="etf-card-desc">${etf.desc}</div>
   <div class="etf-card-bottom">
     <div class="etf-card-price" id="ep-${etf.sym}">${priceInner}</div>
     <div id="ec-${etf.sym}">${chgInner}</div>
