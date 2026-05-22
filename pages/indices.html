@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockLens — 環球指數</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="quote.html">
+      <div class="logo-mark" aria-hidden="true"></div>
+      <span><b>Stock</b><span class="dim">Lens</span></span>
+    </a>
+    <div class="nav-tabs">
+      <a href="quote.html"     class="nav-tab"        data-i18n="nav_quote">股票查詢</a>
+      <a href="etf.html"       class="nav-tab"        data-i18n="nav_etf">ETF</a>
+      <a href="indices.html"   class="nav-tab active"  data-i18n="nav_indices">環球指數</a>
+      <a href="watchlist.html" class="nav-tab"        data-i18n="nav_watchlist">
+        自選清單 <span class="wl-badge" id="wlBadge" hidden>0</span>
+      </a>
+      <a href="portfolio.html" class="nav-tab"        data-i18n="nav_portfolio">持倉</a>
+    </div>
+    <div class="nav-right">
+      <span class="mkt-pill"><span class="dot"></span><span data-i18n="market_open">市場開市</span></span>
+      <div class="lang-toggle" id="langToggle">
+        <button type="button" data-lang="zh">繁中</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="coming-soon">
+    <span class="cs-icon">🌏</span>
+    <div class="cs-title" data-i18n="coming_soon">敬請期待</div>
+    <div class="cs-desc" data-i18n="coming_soon_desc">此功能正在開發中，即將推出。</div>
+  </div>
+</main>
+
+<footer>
+  <div data-i18n="footer_left">StockLens · 僅供研究及教育用途，不構成投資建議。</div>
+  <div><span data-i18n="footer_delay">報價延遲約 15 分鐘</span> · <a href="#" data-i18n="footer_terms">服務條款</a></div>
+</footer>
+
+<!-- Mobile Bottom Nav -->
+<nav class="bottom-nav">
+  <a href="quote.html"     class="bn-item">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span>查詢</span>
+  </a>
+  <a href="etf.html"       class="bn-item">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>ETF</span>
+  </a>
+  <a href="indices.html"   class="bn-item active">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
+    <span>指數</span>
+  </a>
+  <a href="watchlist.html" class="bn-item">
+    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span>自選</span>
+  </a>
+  <a href="portfolio.html" class="bn-item">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span>持倉</span>
+  </a>
+</nav>
+
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+applyLang();
+updateWlBadge();
+document.querySelectorAll('.lang-toggle button').forEach(b => {
+  b.addEventListener('click', () => setLang(b.dataset.lang));
+});
+</script>
+</body>
+</html>
