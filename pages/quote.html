@@ -279,7 +279,7 @@ async function fetchChipQuotes(){
 }
 
 /* ── Search ──────────────────────────────────────── */
-const qs = sym => { $('sym-input').value = sym; doSearch(); };
+function qs(sym){ $('sym-input').value = sym; doSearch(); }
 
 async function doSearch(){
   const sym = $('sym-input').value.trim().toUpperCase();
