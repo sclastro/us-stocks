@@ -287,7 +287,7 @@ function renderGrid() {
 /* ── Batched price loading ───────────────────────────── */
 async function loadPrices(list, gen) {
   const total = list.length;
-  let done = 0;
+  let done = 0, errors = 0;
   setStatus(`${currentLang === 'zh' ? '載入中' : 'Loading'} ${done}/${total}`);
 
   for (const idx of list) {
@@ -297,14 +297,33 @@ async function loadPrices(list, gen) {
       if (gen !== loadGen) return;
       priceCache[idx.symbol] = data;
       updateCard(idx, data);
-    } catch { /* keep skeleton on error */ }
+    } catch (err) {
+      errors++;
+      markCardError(idx);
+      if (errors === 1) console.warn('[StockLens/indices]', err.message);
+    }
     done++;
     if (done < total) {
       setStatus(`${currentLang === 'zh' ? '載入中' : 'Loading'} ${done}/${total}`);
       await new Promise(r => setTimeout(r, 300));
     }
   }
-  if (gen === loadGen) setStatus('');
+  if (gen !== loadGen) return;
+  if (errors === total) {
+    setStatus(currentLang === 'zh'
+      ? '⚠ 數據載入失敗，請確認 Netlify function 已部署'
+      : '⚠ Failed to load — check Netlify functions');
+  } else {
+    setStatus('');
+  }
+}
+
+function markCardError(idx) {
+  const id = symId(idx.symbol);
+  const priceEl = $(`ip-${id}`);
+  const chgEl   = $(`ic-${id}`);
+  if (priceEl) priceEl.textContent = '—';
+  if (chgEl)   chgEl.innerHTML = '<span class="idx-card-chg neu">N/A</span>';
 }
 
 function updateCard(idx, data) {
