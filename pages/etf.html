@@ -38,12 +38,27 @@
   </div>
 </nav>
 
+<!-- MAIN -->
 <main>
-  <div class="coming-soon">
-    <span class="cs-icon">📊</span>
-    <div class="cs-title" data-i18n="coming_soon">敬請期待</div>
-    <div class="cs-desc" data-i18n="coming_soon_desc">此功能正在開發中，即將推出。</div>
+  <div class="etf-page-head">
+    <h1 data-i18n="nav_etf">ETF</h1>
+    <p id="etfPageSub">ETF 分類行情，點擊任何 ETF 查看完整詳情。</p>
   </div>
+
+  <!-- Filter: Group + Category -->
+  <div class="etf-filter">
+    <div class="etf-group-bar" id="groupBar"></div>
+    <div class="etf-cat-bar"   id="catBar"></div>
+  </div>
+
+  <!-- Status row -->
+  <div class="etf-status-row">
+    <span class="etf-count" id="etfCount"></span>
+    <span class="etf-load-status" id="loadStatus"></span>
+  </div>
+
+  <!-- Card grid -->
+  <div class="etf-grid" id="etfGrid"></div>
 </main>
 
 <footer>
@@ -77,11 +92,257 @@
 
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
 <script>
+'use strict';
+
+/* ── ETF catalogue (static data) ────────────────── */
+const GROUPS = [
+  {
+    id: 'asset',
+    label: { zh: '資產類別', en: 'Asset Class' },
+    cats: [
+      {
+        id: 'us_index',
+        label: { zh: '美股指數', en: 'US Index' },
+        etfs: [
+          { sym: 'SPY',  name: { zh: '標普500 ETF',      en: 'S&P 500 ETF' }},
+          { sym: 'QQQ',  name: { zh: '納斯達克100 ETF',  en: 'Nasdaq-100 ETF' }},
+          { sym: 'DIA',  name: { zh: '道瓊工業指數 ETF', en: 'Dow Jones ETF' }},
+          { sym: 'IWM',  name: { zh: '羅素2000 ETF',     en: 'Russell 2000 ETF' }},
+          { sym: 'VTI',  name: { zh: '全美股市 ETF',     en: 'Total Market ETF' }},
+        ]
+      },
+      {
+        id: 'tech',
+        label: { zh: '科技', en: 'Tech' },
+        etfs: [
+          { sym: 'XLK',  name: { zh: '科技類股精選 ETF', en: 'Tech Select Sector ETF' }},
+          { sym: 'SOXX', name: { zh: '費城半導體 ETF',   en: 'Semiconductor ETF' }},
+          { sym: 'ARKK', name: { zh: 'ARK 創新 ETF',     en: 'ARK Innovation ETF' }},
+          { sym: 'IGV',  name: { zh: '軟件科技 ETF',     en: 'Software & Services ETF' }},
+        ]
+      },
+      {
+        id: 'bonds',
+        label: { zh: '債券', en: 'Bonds' },
+        etfs: [
+          { sym: 'TLT',  name: { zh: '20年期美債 ETF',   en: '20+ Year Treasury ETF' }},
+          { sym: 'BND',  name: { zh: '全市場債券 ETF',   en: 'Total Bond Market ETF' }},
+          { sym: 'AGG',  name: { zh: '核心美債綜合 ETF', en: 'Core US Bond ETF' }},
+          { sym: 'HYG',  name: { zh: '高收益公司債 ETF', en: 'High Yield Bond ETF' }},
+          { sym: 'LQD',  name: { zh: '投資級公司債 ETF', en: 'Investment Grade Bond ETF' }},
+        ]
+      },
+      {
+        id: 'commodities',
+        label: { zh: '商品', en: 'Commodities' },
+        etfs: [
+          { sym: 'GLD',  name: { zh: 'SPDR 黃金 ETF',    en: 'SPDR Gold ETF' }},
+          { sym: 'SLV',  name: { zh: 'iShares 白銀 ETF', en: 'iShares Silver ETF' }},
+          { sym: 'USO',  name: { zh: '美國石油 ETF',      en: 'US Oil Fund' }},
+          { sym: 'DJP',  name: { zh: '彭博商品 ETN',      en: 'Bloomberg Commodity ETN' }},
+        ]
+      },
+      {
+        id: 'realestate',
+        label: { zh: '房地產', en: 'Real Estate' },
+        etfs: [
+          { sym: 'VNQ',  name: { zh: 'Vanguard 房地產 ETF',  en: 'Vanguard REIT ETF' }},
+          { sym: 'IYR',  name: { zh: 'iShares 美國地產 ETF', en: 'iShares Real Estate ETF' }},
+        ]
+      },
+    ]
+  },
+  {
+    id: 'region',
+    label: { zh: '地區', en: 'Region' },
+    cats: [
+      {
+        id: 'usa',
+        label: { zh: '美國', en: 'United States' },
+        etfs: [
+          { sym: 'VOO',  name: { zh: 'Vanguard 標普500 ETF',   en: 'Vanguard S&P 500 ETF' }},
+          { sym: 'IVV',  name: { zh: 'iShares 核心標普500 ETF', en: 'iShares Core S&P 500 ETF' }},
+          { sym: 'SCHB', name: { zh: '嘉信全美股市 ETF',        en: 'Schwab US Broad Market ETF' }},
+        ]
+      },
+      {
+        id: 'global',
+        label: { zh: '全球', en: 'Global' },
+        etfs: [
+          { sym: 'VT',   name: { zh: 'Vanguard 全球股票 ETF',   en: 'Vanguard Total World ETF' }},
+          { sym: 'ACWI', name: { zh: 'iShares MSCI 全球 ETF',   en: 'iShares MSCI ACWI ETF' }},
+          { sym: 'EFA',  name: { zh: 'iShares 已開發市場 ETF',  en: 'Developed Markets ETF' }},
+        ]
+      },
+      {
+        id: 'emerging',
+        label: { zh: '新興市場', en: 'Emerging' },
+        etfs: [
+          { sym: 'EEM',  name: { zh: 'iShares MSCI 新興市場 ETF', en: 'iShares MSCI EM ETF' }},
+          { sym: 'VWO',  name: { zh: 'Vanguard 新興市場 ETF',     en: 'Vanguard EM ETF' }},
+        ]
+      },
+      {
+        id: 'asia',
+        label: { zh: '亞洲', en: 'Asia' },
+        etfs: [
+          { sym: 'EWJ',  name: { zh: 'iShares MSCI 日本 ETF', en: 'iShares MSCI Japan ETF' }},
+          { sym: 'KWEB', name: { zh: '中國互聯網 ETF',          en: 'China Internet ETF' }},
+          { sym: 'FXI',  name: { zh: '中國大型股 ETF',           en: 'China Large-Cap ETF' }},
+          { sym: 'EWH',  name: { zh: 'iShares MSCI 香港 ETF',   en: 'iShares MSCI Hong Kong ETF' }},
+        ]
+      },
+      {
+        id: 'europe',
+        label: { zh: '歐洲', en: 'Europe' },
+        etfs: [
+          { sym: 'VGK',  name: { zh: 'Vanguard 歐洲股票 ETF',   en: 'Vanguard European ETF' }},
+          { sym: 'EZU',  name: { zh: 'iShares MSCI 歐元區 ETF', en: 'iShares MSCI Eurozone ETF' }},
+        ]
+      },
+    ]
+  }
+];
+
+/* ── State ───────────────────────────────────────── */
+let activeGroupId = 'asset';
+let activeCatId   = 'us_index';
+let loadGen       = 0;
+const priceCache  = {};
+
+/* ── Helpers ─────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const activeGroup = () => GROUPS.find(g => g.id === activeGroupId);
+const activeCat   = () => activeGroup().cats.find(c => c.id === activeCatId);
+const lbl  = obj => obj.label[currentLang] || obj.label.zh;
+const ename = etf => etf.name[currentLang]  || etf.name.zh;
+
+/* ── Render ──────────────────────────────────────── */
+function renderAll() {
+  renderGroupTabs();
+  renderCatTabs();
+  renderGrid();
+  updatePageSub();
+}
+
+function updatePageSub() {
+  $('etfPageSub').textContent = currentLang === 'zh'
+    ? 'ETF 分類行情，點擊任何 ETF 查看完整詳情。'
+    : 'ETF market overview. Click any card for full details.';
+}
+
+function renderGroupTabs() {
+  $('groupBar').innerHTML = GROUPS.map(g =>
+    `<button class="etf-group-btn${g.id === activeGroupId ? ' active' : ''}" data-gid="${g.id}">${lbl(g)}</button>`
+  ).join('');
+  $('groupBar').querySelectorAll('.etf-group-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeGroupId = btn.dataset.gid;
+      activeCatId   = activeGroup().cats[0].id;
+      renderAll();
+    });
+  });
+}
+
+function renderCatTabs() {
+  $('catBar').innerHTML = activeGroup().cats.map(c =>
+    `<button class="etf-cat-btn${c.id === activeCatId ? ' active' : ''}" data-cid="${c.id}">${lbl(c)}</button>`
+  ).join('');
+  $('catBar').querySelectorAll('.etf-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.cid === activeCatId) return;
+      activeCatId = btn.dataset.cid;
+      renderCatTabs();
+      renderGrid();
+    });
+  });
+}
+
+function renderGrid() {
+  const etfs = activeCat().etfs;
+  const gen  = ++loadGen;
+
+  $('etfCount').textContent = `${etfs.length} ETFs`;
+  setStatus('');
+
+  // Render cards — show cached data or skeleton for price/change
+  $('etfGrid').innerHTML = etfs.map(etf => cardHTML(etf, priceCache[etf.sym])).join('');
+
+  // Only fetch what isn't cached yet
+  const uncached = etfs.filter(e => !priceCache[e.sym]);
+  if (uncached.length) loadPrices(uncached, gen);
+}
+
+function cardHTML(etf, data) {
+  const priceInner = data
+    ? fmt$(data.c)
+    : `<span class="sk" style="width:66px;height:13px;border-radius:3px"></span>`;
+  const chgInner = data
+    ? buildChgSpan(data.dp, data.d)
+    : `<span class="sk" style="width:50px;height:20px;border-radius:5px"></span>`;
+
+  return `
+<a href="quote.html?symbol=${etf.sym}" class="etf-card">
+  <div class="etf-card-sym">${etf.sym}</div>
+  <div class="etf-card-name">${ename(etf)}</div>
+  <div class="etf-card-bottom">
+    <div class="etf-card-price" id="ep-${etf.sym}">${priceInner}</div>
+    <div id="ec-${etf.sym}">${chgInner}</div>
+  </div>
+</a>`;
+}
+
+function buildChgSpan(dp, d) {
+  const up  = dp >= 0;
+  const cls = up ? 'up' : dp < 0 ? 'dn' : 'neu';
+  return `<span class="etf-card-chg ${cls}">${up ? '+' : ''}${dp.toFixed(2)}%</span>`;
+}
+
+/* ── Batched price loading ───────────────────────── */
+async function loadPrices(etfs, gen) {
+  const total = etfs.length;
+  let done = 0;
+  setStatus(`${currentLang === 'zh' ? '載入中' : 'Loading'} ${done}/${total}`);
+
+  for (const etf of etfs) {
+    if (gen !== loadGen) return;
+    try {
+      const q = await API.getQuote(etf.sym);
+      if (gen !== loadGen) return;
+      priceCache[etf.sym] = q;
+      updateCard(etf.sym, q);
+    } catch { /* skip on error, card stays as skeleton */ }
+    done++;
+    if (done < total) {
+      setStatus(`${currentLang === 'zh' ? '載入中' : 'Loading'} ${done}/${total}`);
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+  if (gen === loadGen) setStatus('');
+}
+
+function updateCard(sym, q) {
+  const priceEl = $(`ep-${sym}`);
+  const chgEl   = $(`ec-${sym}`);
+  if (!priceEl || !chgEl) return;
+  priceEl.textContent = fmt$(q.c);
+  chgEl.innerHTML     = buildChgSpan(q.dp, q.d);
+}
+
+function setStatus(text) { $('loadStatus').textContent = text; }
+
+/* ── Boot ────────────────────────────────────────── */
 applyLang();
 updateWlBadge();
+renderAll();
+
 document.querySelectorAll('.lang-toggle button').forEach(b => {
-  b.addEventListener('click', () => setLang(b.dataset.lang));
+  b.addEventListener('click', () => {
+    setLang(b.dataset.lang);
+    renderAll();
+  });
 });
 </script>
 </body>
