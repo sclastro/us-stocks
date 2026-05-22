@@ -229,7 +229,7 @@ function cardHTML(idx, data) {
     : `<span class="sk" style="width:80px;height:20px;border-radius:5px"></span>`;
 
   return `
-<div class="idx-card">
+<a href="https://finance.yahoo.com/quote/${encodeURIComponent(idx.symbol)}" target="_blank" rel="noopener noreferrer" class="idx-card">
   <div class="idx-card-head" id="ih-${id}">
     <div class="idx-card-name">${idx.name}</div>
     ${badge}
@@ -240,7 +240,7 @@ function cardHTML(idx, data) {
     <div class="idx-card-price" id="ip-${id}">${priceInner}</div>
     <div id="ic-${id}">${chgInner}</div>
   </div>
-</div>`;
+</a>`;
 }
 
 /* ── Render ──────────────────────────────────────────── */
