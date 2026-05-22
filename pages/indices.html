@@ -348,7 +348,7 @@ function markCardError(idx) {
   const priceEl = $(`ip-${id}`);
   const chgEl   = $(`ic-${id}`);
   if (priceEl) priceEl.textContent = '—';
-  if (chgEl)   chgEl.innerHTML = '<span class="idx-card-chg neu">N/A</span>';
+  if (chgEl)   chgEl.innerHTML = `<span class="idx-card-chg neu">${currentLang === 'zh' ? '暫無數據' : 'N/A'}</span>`;
 }
 
 function updateCard(idx, data) {
