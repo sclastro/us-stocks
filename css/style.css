@@ -130,6 +130,7 @@ main{max-width:1240px;margin:0 auto;padding:44px 28px 80px}
 .price-delta{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;min-height:30px}
 .price-delta.up{background:var(--up-soft);color:var(--up)}
 .price-delta.down{background:var(--down-soft);color:var(--down)}
+.price-delta.neu{background:var(--surface-2);color:var(--muted)}
 .price-delta svg{width:12px;height:12px}
 
 /* ── Watch button ─────────────────────────────────── */
