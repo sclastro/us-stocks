@@ -33,17 +33,29 @@
         <button type="button" data-lang="zh">繁中</button>
         <button type="button" data-lang="en">EN</button>
       </div>
-      <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+      <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Yahoo Finance</b></span>
     </div>
   </div>
 </nav>
 
+<!-- MAIN -->
 <main>
-  <div class="coming-soon">
-    <span class="cs-icon">🌏</span>
-    <div class="cs-title" data-i18n="coming_soon">敬請期待</div>
-    <div class="cs-desc" data-i18n="coming_soon_desc">此功能正在開發中，即將推出。</div>
+  <div class="idx-page-head">
+    <h1 data-i18n="nav_indices">環球指數</h1>
+    <p id="idxPageSub">環球主要股票指數、商品及匯率即時行情。</p>
   </div>
+
+  <!-- Tab bar -->
+  <div class="idx-tab-bar" id="idxTabBar"></div>
+
+  <!-- Status row -->
+  <div class="idx-status-row">
+    <span class="idx-count" id="idxCount"></span>
+    <span class="idx-load-status" id="idxLoadStatus"></span>
+  </div>
+
+  <!-- Card grid -->
+  <div class="idx-grid" id="idxGrid"></div>
 </main>
 
 <footer>
@@ -77,11 +89,252 @@
 
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
 <script>
+'use strict';
+
+/* ── Index catalogue (static data) ──────────────────── */
+const CATS = [
+  {
+    id: 'us',
+    label: { zh: '美國', en: 'US' },
+    indices: [
+      { symbol: '^DJI',   name: '道瓊斯工業指數',       desc: '30隻美國藍籌股，歷史最悠久股市指數' },
+      { symbol: '^GSPC',  name: '標普500指數',           desc: '美國500大企業，最具代表性的市場指數' },
+      { symbol: '^IXIC',  name: '納斯達克綜合指數',      desc: '科技股為主的綜合指數' },
+      { symbol: '^RUT',   name: '羅素2000指數',          desc: '2000隻美國小型股，反映中小企業表現' },
+      { symbol: '^VIX',   name: '恐慌指數 VIX',          desc: '衡量市場波動預期，升高代表市場恐慌' },
+    ]
+  },
+  {
+    id: 'asia',
+    label: { zh: '亞洲', en: 'Asia' },
+    indices: [
+      { symbol: '^N225',     name: '日經225指數',          desc: '日本225隻主要上市企業' },
+      { symbol: '^HSI',      name: '恆生指數',             desc: '香港股市最重要指數，藍籌股為主' },
+      { symbol: '^HSCE',     name: '國企指數（H股）',      desc: '在港上市中國國有企業' },
+      { symbol: '000001.SS', name: '上證綜合指數',         desc: '上海證券交易所所有A股B股' },
+      { symbol: '399001.SZ', name: '深證成份指數',         desc: '深圳證券交易所主要股票' },
+      { symbol: '^KS11',     name: '韓國綜合指數 KOSPI',   desc: '韓國股市主要指數' },
+      { symbol: '^BSESN',    name: '印度孟買指數 SENSEX',  desc: '印度30隻主要藍籌股' },
+    ]
+  },
+  {
+    id: 'europe',
+    label: { zh: '歐洲', en: 'Europe' },
+    indices: [
+      { symbol: '^FTSE',    name: '英國富時100指數',    desc: '英國100隻最大上市企業' },
+      { symbol: '^GDAXI',   name: '德國DAX指數',        desc: '德國40隻主要上市企業' },
+      { symbol: '^FCHI',    name: '法國CAC 40指數',     desc: '法國40隻主要上市企業' },
+      { symbol: '^STOXX50E',name: '歐元區斯托克50指數', desc: '歐元區50隻藍籌股' },
+    ]
+  },
+  {
+    id: 'other',
+    label: { zh: '其他市場', en: 'Other' },
+    indices: [
+      { symbol: '^AXJO', name: '澳洲ASX 200指數',   desc: '澳洲200隻主要上市企業' },
+      { symbol: '^BVSP', name: '巴西BOVESPA指數',   desc: '巴西最主要的股票市場指數' },
+    ]
+  },
+  {
+    id: 'commodity',
+    label: { zh: '商品', en: 'Commodities' },
+    indices: [
+      { symbol: 'GC=F', name: '黃金期貨',     desc: '紐約商品交易所黃金期貨價格（美元/盎司）' },
+      { symbol: 'SI=F', name: '白銀期貨',     desc: '紐約商品交易所白銀期貨價格（美元/盎司）' },
+      { symbol: 'CL=F', name: 'WTI原油期貨', desc: '西德克薩斯中質原油，美國原油基準價' },
+      { symbol: 'BZ=F', name: '布蘭特原油期貨', desc: '布蘭特原油，國際原油基準價' },
+    ]
+  },
+  {
+    id: 'forex',
+    label: { zh: '匯率', en: 'FX' },
+    indices: [
+      { symbol: 'EURUSD=X', name: '歐元 / 美元',  desc: '全球交易量最大的貨幣對' },
+      { symbol: 'GBPUSD=X', name: '英鎊 / 美元',  desc: '英國脫歐後仍是主要貨幣對' },
+      { symbol: 'JPY=X',    name: '美元 / 日元',  desc: '亞洲最重要的貨幣對' },
+      { symbol: 'HKDUSD=X', name: '港元 / 美元',  desc: '港元與美元掛鉤，波動極小' },
+      { symbol: 'CNY=X',    name: '美元 / 人民幣', desc: '中國官方匯率參考' },
+    ]
+  },
+];
+
+/* ── State ───────────────────────────────────────────── */
+let activeTab    = 'us';
+let loadGen      = 0;
+const priceCache = {};
+
+/* ── Helpers ─────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const activeCat = () => CATS.find(c => c.id === activeTab);
+
+function symId(sym) {
+  return sym.replace(/[^A-Za-z0-9]/g, '_');
+}
+
+/* Format price based on symbol type */
+function fmtIdxPrice(price, sym) {
+  if (typeof price !== 'number' || isNaN(price)) return '—';
+  if (sym.endsWith('=X')) return price.toFixed(4);
+  return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* Format absolute change */
+function fmtChange(change, sym) {
+  const sign = change >= 0 ? '+' : '';
+  if (sym.endsWith('=X')) return sign + change.toFixed(4);
+  const abs = Math.abs(change);
+  const str = abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (change >= 0 ? '+' : '-') + str;
+}
+
+function buildChgHtml(price, change, changePct, sym) {
+  if (typeof change !== 'number' || isNaN(change)) {
+    return '<span class="idx-card-chg neu">—</span>';
+  }
+  /* VIX: no up/dn colour, show volatility label instead */
+  if (sym === '^VIX') {
+    const hi = price > 20;
+    return `<span class="idx-card-chg ${hi ? 'vix-hi' : 'vix-lo'}">${hi ? '高波動' : '低波動'}</span>`;
+  }
+  const up  = change >= 0;
+  const cls = up ? 'up' : 'dn';
+  const pct = (up ? '+' : '') + changePct.toFixed(2) + '%';
+  const chg = fmtChange(change, sym);
+  return `<span class="idx-card-chg ${cls}">${pct} (${chg})</span>`;
+}
+
+function buildMktBadge(state) {
+  if (!state) return '';
+  const map = {
+    REGULAR:  { zh: '開市',   en: 'Open',   cls: 'open' },
+    PRE:      { zh: '盤前',   en: 'Pre',    cls: 'pre' },
+    POST:     { zh: '盤後',   en: 'After',  cls: 'post' },
+    POSTPOST: { zh: '盤後',   en: 'After',  cls: 'post' },
+  };
+  const e = map[state] || { zh: '收市', en: 'Closed', cls: 'closed' };
+  return `<span class="idx-mkt-badge ${e.cls}">${e[currentLang] || e.zh}</span>`;
+}
+
+/* ── Card HTML ───────────────────────────────────────── */
+function cardHTML(idx, data) {
+  const id         = symId(idx.symbol);
+  const badge      = data ? buildMktBadge(data.marketState) : '';
+  const priceInner = data
+    ? fmtIdxPrice(data.price, idx.symbol)
+    : `<span class="sk" style="width:80px;height:13px;border-radius:3px"></span>`;
+  const chgInner   = data
+    ? buildChgHtml(data.price, data.change, data.changePercent, idx.symbol)
+    : `<span class="sk" style="width:80px;height:20px;border-radius:5px"></span>`;
+
+  return `
+<div class="idx-card">
+  <div class="idx-card-head" id="ih-${id}">
+    <div class="idx-card-name">${idx.name}</div>
+    ${badge}
+  </div>
+  <div class="idx-card-sym">${idx.symbol}</div>
+  <div class="idx-card-desc">${idx.desc}</div>
+  <div class="idx-card-bottom">
+    <div class="idx-card-price" id="ip-${id}">${priceInner}</div>
+    <div id="ic-${id}">${chgInner}</div>
+  </div>
+</div>`;
+}
+
+/* ── Render ──────────────────────────────────────────── */
+function renderAll() {
+  renderTabs();
+  renderGrid();
+  updatePageSub();
+}
+
+function updatePageSub() {
+  $('idxPageSub').textContent = currentLang === 'zh'
+    ? '環球主要股票指數、商品及匯率即時行情。'
+    : 'Live global indices, commodities and FX rates.';
+}
+
+function renderTabs() {
+  $('idxTabBar').innerHTML = CATS.map(c =>
+    `<button class="idx-tab-btn${c.id === activeTab ? ' active' : ''}" data-id="${c.id}">${c.label[currentLang] || c.label.zh}</button>`
+  ).join('');
+  $('idxTabBar').querySelectorAll('.idx-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.id === activeTab) return;
+      activeTab = btn.dataset.id;
+      renderTabs();
+      renderGrid();
+    });
+  });
+}
+
+function renderGrid() {
+  const cat  = activeCat();
+  const list = cat.indices;
+  const gen  = ++loadGen;
+
+  $('idxCount').textContent = `${list.length} ${currentLang === 'zh' ? '項' : 'items'}`;
+  setStatus('');
+
+  $('idxGrid').innerHTML = list.map(idx => cardHTML(idx, priceCache[idx.symbol])).join('');
+
+  const uncached = list.filter(i => !priceCache[i.symbol]);
+  if (uncached.length) loadPrices(uncached, gen);
+}
+
+/* ── Batched price loading ───────────────────────────── */
+async function loadPrices(list, gen) {
+  const total = list.length;
+  let done = 0;
+  setStatus(`${currentLang === 'zh' ? '載入中' : 'Loading'} ${done}/${total}`);
+
+  for (const idx of list) {
+    if (gen !== loadGen) return;
+    try {
+      const data = await API.getIndexQuote(idx.symbol);
+      if (gen !== loadGen) return;
+      priceCache[idx.symbol] = data;
+      updateCard(idx, data);
+    } catch { /* keep skeleton on error */ }
+    done++;
+    if (done < total) {
+      setStatus(`${currentLang === 'zh' ? '載入中' : 'Loading'} ${done}/${total}`);
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+  if (gen === loadGen) setStatus('');
+}
+
+function updateCard(idx, data) {
+  const id      = symId(idx.symbol);
+  const priceEl = $(`ip-${id}`);
+  const chgEl   = $(`ic-${id}`);
+  const headEl  = $(`ih-${id}`);
+  if (!priceEl || !chgEl) return;
+
+  priceEl.textContent = fmtIdxPrice(data.price, idx.symbol);
+  chgEl.innerHTML     = buildChgHtml(data.price, data.change, data.changePercent, idx.symbol);
+
+  if (headEl) {
+    headEl.querySelector('.idx-mkt-badge')?.remove();
+    headEl.insertAdjacentHTML('beforeend', buildMktBadge(data.marketState));
+  }
+}
+
+function setStatus(text) { $('idxLoadStatus').textContent = text; }
+
+/* ── Boot ────────────────────────────────────────────── */
 applyLang();
 updateWlBadge();
+renderAll();
+
 document.querySelectorAll('.lang-toggle button').forEach(b => {
-  b.addEventListener('click', () => setLang(b.dataset.lang));
+  b.addEventListener('click', () => {
+    setLang(b.dataset.lang);
+    renderAll();
+  });
 });
 </script>
 </body>
