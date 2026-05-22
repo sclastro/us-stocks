@@ -40,8 +40,15 @@ exports.handler = async (event) => {
       price,
       change,
       changePercent,
-      marketState: meta.marketState ?? 'CLOSED',
-      currency: meta.currency,
+      marketState:      meta.marketState ?? 'CLOSED',
+      currency:         meta.currency,
+      open:             meta.regularMarketOpen             ?? null,
+      dayHigh:          meta.regularMarketDayHigh          ?? null,
+      dayLow:           meta.regularMarketDayLow           ?? null,
+      volume:           meta.regularMarketVolume           ?? null,
+      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh              ?? null,
+      fiftyTwoWeekLow:  meta.fiftyTwoWeekLow               ?? null,
+      shortName:        meta.shortName || meta.longName    || null,
     });
   } catch (err) {
     return json(500, { error: err.message });
