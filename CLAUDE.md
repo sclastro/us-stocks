@@ -155,6 +155,12 @@ Index mode 行為：
 `TV_SYMBOL_MAP` 涵蓋：美股指數(5)、亞洲(9)、歐洲(8)、其他(3)、商品(9)、匯率(9)
 無對應的 symbol（越南VNINDEX、沙特TASI、南非JSE、阿根廷MERVAL、URA、CNY=X 等）→ 隱藏圖表區塊
 
+## 部署說明
+- 本地開發：使用 `netlify dev` 啟動本地伺服器
+- 暫停自動部署：已在 Netlify dashboard 關閉 Auto publishing
+- 手動部署時機：功能完整測試後才執行 `git push`
+- 重新開啟自動部署：Netlify dashboard → Deploys → Enable Auto publishing
+
 ## Netlify 部署設定
 
 1. 在 Netlify Dashboard → Site Settings → Environment Variables 加入：
