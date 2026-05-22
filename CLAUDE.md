@@ -153,7 +153,13 @@ netlify dev
 - 最新新聞 + 繁體中文翻譯（Google Translate API）
 - 自選清單（localStorage，支援批量即時價格更新）
 - ETF 分類瀏覽（11 個資產類別 + 8 個地區，~70 隻 ETF，含描述）
-- 環球指數（美國/亞洲/歐洲/其他市場/商品/匯率，Yahoo Finance 數據）
+- 環球指數（6 個分類，Yahoo Finance 數據）：
+  - 美國(5)：DJI、GSPC、IXIC、RUT、VIX
+  - 亞洲(13)：N225、HSI、HSCE、上證、深證、KOSPI、SENSEX、TWII、JKSE、VNINDEX、SET、KLSE、STI
+  - 歐洲(8)：FTSE、DAX、CAC40、STOXX50E、SMI、AEX、IBEX、MIB
+  - 其他市場(6)：ASX200、BOVESPA、TASI、JSE、IPC、MERVAL
+  - 商品(10)：黃金、白銀、WTI、布蘭特、天然氣、銅、玉米、大豆、白金、鈾礦ETF(URA)
+  - 匯率(10)：EUR、GBP、JPY、HKD、CNY、AUD、CAD、CHF、CNY(在岸)、TWD
 - 中英文切換（i18n）
 - Skeleton loading 效果
 - URL param 支援：`pages/quote.html?symbol=AAPL`
