@@ -286,6 +286,23 @@ async function doSearch(){
   const sym = $('sym-input').value.trim().toUpperCase();
   if (!sym) return;
 
+  /* ── Detect index / commodity / forex mode ── */
+  const _up    = new URLSearchParams(window.location.search);
+  const _uSym  = _up.get('symbol')?.toUpperCase();
+  const _uType = _up.get('type');
+  const _hint  = (_uSym === sym) ? (_up.get('name') || '') : '';
+  currentIdxMode = sym.startsWith('^') || sym.includes('=F') || sym.includes('=X')
+                   || (_uType === 'index' && _uSym === sym);
+
+  if (currentIdxMode) { await doIndexSearch(sym, _hint); return; }
+
+  /* ── Stock mode: restore any hidden panels ── */
+  const _nc = document.querySelector('.news-card');
+  if (_nc) _nc.hidden = false;
+  $('watchBtn').hidden = false;
+  const _cc = $('tv-chart')?.closest('.card');
+  if (_cc) _cc.hidden = false;
+
   currentSym   = sym;
   newsData     = [];
   activePeriod = '1M';
