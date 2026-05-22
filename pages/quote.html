@@ -449,7 +449,19 @@ function updateChartBadge(){
 }
 function updateTVChart(){
   if (!currentSym) return;
-  const sym = currentSym, frame = $('tv-chart'), loader = $('tv-loader');
+  const sym = currentSym;
+  const chartCard = $('tv-chart')?.closest('.card');
+
+  let tvSym;
+  if (currentIdxMode) {
+    tvSym = TV_SYMBOL_MAP[sym];
+    if (!tvSym) { if (chartCard) chartCard.hidden = true; return; }
+  } else {
+    tvSym = sym;
+  }
+  if (chartCard) chartCard.hidden = false;
+
+  const frame = $('tv-chart'), loader = $('tv-loader');
   loader.hidden = false;
   frame.classList.add('tv-loading');
   frame.onload = () => {
@@ -457,7 +469,7 @@ function updateTVChart(){
     frame.classList.remove('tv-loading');
     loader.hidden = true;
   };
-  frame.src = buildTVUrl(sym, activePeriod);
+  frame.src = buildTVUrl(tvSym, activePeriod);
   updateChartBadge();
 }
 function switchPeriod(period, btn){
