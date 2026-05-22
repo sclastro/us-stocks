@@ -479,6 +479,135 @@ function switchPeriod(period, btn){
   updateTVChart();
 }
 
+/* ── Index / Commodity / FX support ─────────────── */
+const TV_SYMBOL_MAP = {
+  '^GSPC':'SP:SPX',     '^DJI':'DJ:DJI',       '^IXIC':'NASDAQ:NDX',
+  '^RUT':'TVC:RUT',     '^VIX':'TVC:VIX',
+  '^N225':'TVC:NI225',  '^HSI':'HSI:HSI',       '^HSCE':'HSI:HSCEI',
+  '000001.SS':'SSE:000001', '399001.SZ':'SZSE:399001',
+  '^KS11':'KRX:KOSPI',  '^BSESN':'BSE:SENSEX', '^TWII':'TWSE:TAIEX',
+  '^STI':'SGX:STI',     '^KLSE':'MYX:FBMKLCI', '^JKSE':'IDX:COMPOSITE',
+  '^SET.BK':'SET:SET',
+  '^FTSE':'TVC:UKX',    '^GDAXI':'TVC:DAX',    '^FCHI':'TVC:CAC40',
+  '^STOXX50E':'TVC:SX5E', '^SSMI':'TVC:SMI',   '^AEX':'TVC:AEX',
+  '^IBEX':'TVC:IBEX35', '^FTSEMIB.MI':'TVC:IT40',
+  '^AXJO':'ASX:XJO',    '^BVSP':'BMFBOVESPA:IBOV', '^MXX':'BMV:IPC',
+  'GC=F':'TVC:GOLD',    'SI=F':'TVC:SILVER',   'CL=F':'TVC:USOIL',
+  'BZ=F':'TVC:UKOIL',   'NG=F':'TVC:NATURALGAS', 'HG=F':'TVC:COPPER',
+  'PL=F':'TVC:PLATINUM', 'ZC=F':'CBOT:ZC1!',   'ZS=F':'CBOT:ZS1!',
+  'EURUSD=X':'FX:EURUSD', 'GBPUSD=X':'FX:GBPUSD', 'JPY=X':'FX:USDJPY',
+  'AUDUSD=X':'FX:AUDUSD', 'CADUSD=X':'FX:USDCAD', 'CHFUSD=X':'FX:USDCHF',
+  'CNYUSD=X':'FX:USDCNH', 'TWDUSD=X':'FX:USDTWD', 'HKDUSD=X':'FX:USDHKD',
+};
+
+function fmtIdxPrice(price, sym) {
+  if (typeof price !== 'number' || isNaN(price)) return '—';
+  if (sym.endsWith('=X')) return price.toFixed(4);
+  return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtIdxChange(change, sym) {
+  if (typeof change !== 'number' || isNaN(change)) return '—';
+  const sign = change >= 0 ? '+' : '';
+  if (sym.endsWith('=X')) return sign + change.toFixed(4);
+  const str = Math.abs(change).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (change >= 0 ? '+' : '-') + str;
+}
+function fmtVol(v) {
+  if (!v || isNaN(v)) return '—';
+  if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return String(v);
+}
+
+async function doIndexSearch(sym, hintName) {
+  currentSym   = sym;
+  newsData     = [];
+  activePeriod = '1M';
+
+  const btn = $('srch-btn');
+  btn.disabled    = true;
+  btn.textContent = tr('searching');
+
+  $('st-err').hidden  = true;
+  $('results').hidden = false;
+  showQuoteSkeleton();
+
+  const nc = document.querySelector('.news-card');
+  if (nc) nc.hidden = true;
+  $('watchBtn').hidden = true;
+
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.tf-btn').classList.add('active');
+  $('tv-loader').hidden = false;
+  $('tv-chart').classList.add('tv-loading');
+  $('tv-chart').onload = null;
+  $('tv-chart').src    = '';
+
+  try {
+    const data = await API.getIndexQuote(sym);
+    if (currentSym !== sym) return;
+    renderIndexQuote(data, sym, hintName || data.shortName || sym);
+    updateTVChart();
+  } catch(err) {
+    $('results').hidden = true;
+    $('st-err').hidden  = false;
+    $('err-msg').textContent = err.message || '查詢失敗，請稍後再試';
+  }
+  btn.disabled    = false;
+  btn.textContent = tr('search');
+}
+
+function renderIndexQuote(data, sym, name) {
+  const initials = sym.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '--';
+  $('stock-logo').textContent = initials;
+
+  const sh = $('stock-head');
+  sh.style.setProperty('--stock-fg', 'var(--ink-2)');
+  sh.style.setProperty('--stock-bg', 'var(--surface-2)');
+  sh.style.setProperty('--stock-bd', 'var(--border)');
+
+  $('r-sym').textContent  = sym;
+  $('r-name').textContent = name;
+
+  const mktLbl = { REGULAR:'開市', PRE:'盤前', POST:'盤後', POSTPOST:'盤後', CLOSED:'收市' };
+  $('r-exchange').textContent = mktLbl[data.marketState] || '收市';
+  $('r-sec').textContent      = '';
+  $('r-currency').textContent = data.currency || '';
+
+  $('r-price').textContent = fmtIdxPrice(data.price, sym);
+
+  const d = $('r-delta');
+  if (sym === '^VIX') {
+    const hi = data.price > 20;
+    d.className = 'price-delta neu';
+    d.innerHTML = `<span>${hi ? '高波動 &gt;20' : '低波動 &lt;20'}</span>`;
+  } else {
+    const isUp  = (data.change || 0) >= 0;
+    const arrow = isUp ? 'm5 15 7-7 7 7' : 'm5 9 7 7 7-7';
+    const pct   = `${isUp ? '+' : ''}${(data.changePercent || 0).toFixed(2)}%`;
+    const chg   = fmtIdxChange(data.change, sym);
+    d.className = 'price-delta ' + (isUp ? 'up' : 'down');
+    d.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="${arrow}"/></svg>${pct} (${chg})`;
+  }
+
+  $('r-open').textContent   = fmtIdxPrice(data.open, sym);
+  $('r-hl').textContent     = (data.dayHigh && data.dayLow)
+    ? `${fmtIdxPrice(data.dayHigh, sym)} / ${fmtIdxPrice(data.dayLow, sym)}` : '—';
+  $('r-hl-sub').textContent = '';
+  $('r-vol').textContent    = fmtVol(data.volume);
+  $('r-cap').textContent    = '—';
+
+  if (data.fiftyTwoWeekHigh && data.fiftyTwoWeekLow) {
+    $('r-52').textContent    = `${fmtIdxPrice(data.fiftyTwoWeekHigh, sym)} — ${fmtIdxPrice(data.fiftyTwoWeekLow, sym)}`;
+    const pos = Math.round(100 * (data.price - data.fiftyTwoWeekLow) / (data.fiftyTwoWeekHigh - data.fiftyTwoWeekLow));
+    $('r-52pos').textContent = `${Math.max(0, Math.min(100, pos))}${tr('of_range')}`;
+  } else {
+    $('r-52').textContent    = '—';
+    $('r-52pos').textContent = '';
+  }
+}
+
 /* ── Render: News ────────────────────────────────── */
 function renderNews(){
   const el = $('news-list');
