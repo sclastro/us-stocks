@@ -303,21 +303,29 @@ async function loadFinnhub() {
 
   try {
     const [quote, profile, metric] = await Promise.all([quoteP, profileP, metricP]);
-    if (!quote.pc || quote.pc === 0)
-      throw new Error(`找不到「${sym}」。\n請確認代碼是否正確（例如 AAPL、TSLA、GOOGL）`);
+    if (!quote.pc || quote.pc === 0) throw new Error('empty');
     renderQuote(quote, profile, metric);
     syncWatchBtn();
     updateTVChart();
-  } catch (err) {
-    showError(err.message || '查詢失敗，請稍後再試');
-    return;
-  }
-
-  try {
-    newsData = await newsP;
-    renderNews();
-  } catch {
-    renderNews();
+    try { newsData = await newsP; renderNews(); } catch { renderNews(); }
+  } catch (finnhubErr) {
+    if (symType === 'etf') {
+      /* Finnhub failed — try Yahoo Finance as fallback */
+      $('newsCard').hidden = true;
+      try {
+        const data = await API.getIndexQuote(sym);
+        renderIndexQuote(data);
+        syncWatchBtn();
+        updateTVChart();
+      } catch {
+        showError(`查詢失敗，Finnhub 及 Yahoo Finance 均無法取得 ${sym} 的數據`);
+      }
+    } else {
+      const msg = finnhubErr.message === 'empty'
+        ? `找不到「${sym}」。\n請確認代碼是否正確（例如 AAPL、TSLA、GOOGL）`
+        : (finnhubErr.message || '查詢失敗，請稍後再試');
+      showError(msg);
+    }
   }
 }
 
