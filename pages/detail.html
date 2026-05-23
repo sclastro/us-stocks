@@ -219,42 +219,6 @@ if (isYahoo) {
   $('bn-quote').classList.add('active');
 }
 
-/* ── TradingView symbol map ──────────────────────────
-   Only symbols verified free for widget embed are listed.
-   Symbols absent from this map → fallback message shown.
-   Sources: TradingView widget demo + individual page checks.
-   ──────────────────────────────────────────────────── */
-const TV_SYMBOL_MAP = {
-  /* US Indices — FOREXCOM: CFD (confirmed free, from TV demo) */
-  '^GSPC':'FOREXCOM:SPXUSD',   '^DJI':'FOREXCOM:DJI',       '^IXIC':'FOREXCOM:NSXUSD',
-  '^RUT':'FOREXCOM:RUKUSD',    '^VIX':'TVC:VIX',
-  /* Asia-Pacific — INDEX: (confirmed free, from TV demo) */
-  '^N225':'INDEX:NKY',         '^HSI':'INDEX:HSI',           '^HSCE':'INDEX:HSCEI',
-  '000001.SS':'INDEX:000001',  '399001.SZ':'INDEX:399001',
-  '^KS11':'INDEX:KSIC',        '^BSESN':'INDEX:SENSEX',      '^TWII':'INDEX:TAIEX',
-  '^AXJO':'FOREXCOM:AUS200',   '^STI':'INDEX:STI',           '^SET.BK':'INDEX:SET',
-  '^JKSE':'IDX:COMPOSITE',
-  /* Europe — mix of FOREXCOM: and INDEX: (from TV demo) */
-  '^FTSE':'FOREXCOM:UKXGBP',   '^GDAXI':'INDEX:DEU40',       '^FCHI':'INDEX:CAC40',
-  '^STOXX50E':'INDEX:SX5E',    '^SSMI':'INDEX:SMI',
-  '^IBEX':'FOREXCOM:ESP35',    '^FTSEMIB.MI':'INDEX:FTSEMIB',
-  /* Other markets */
-  '^BVSP':'INDEX:IBOV',
-  /* Commodities — TVC: (confirmed free for all major commodities) */
-  'GC=F':'TVC:GOLD',           'SI=F':'TVC:SILVER',          'CL=F':'TVC:USOIL',
-  'BZ=F':'TVC:UKOIL',          'NG=F':'TVC:NATURALGAS',      'HG=F':'TVC:COPPER',
-  'PL=F':'TVC:PLATINUM',       'ZC=F':'CBOT:ZC1!',           'ZS=F':'CBOT:ZS1!',
-  /* Crypto — exchange prefix (confirmed free) */
-  'BTC-USD':'COINBASE:BTCUSD', 'ETH-USD':'COINBASE:ETHUSD',
-  /* FX canonical — FX: / FX_IDC: (confirmed free) */
-  'EURUSD=X':'FX:EURUSD',      'GBPUSD=X':'FX:GBPUSD',      'USDJPY=X':'FX:USDJPY',
-  'AUDUSD=X':'FX:AUDUSD',      'USDCNH=X':'FX:USDCNH',      'USDKRW=X':'FX_IDC:USDKRW',
-  'USDHKD=X':'FX:USDHKD',
-  /* FX aliases — indices.html Yahoo Finance key names */
-  'JPY=X':'FX:USDJPY',         'CNY=X':'FX:USDCNH',          'HKDUSD=X':'FX:USDHKD',
-  'CADUSD=X':'FX:USDCAD',      'CHFUSD=X':'FX:USDCHF',       'CNYUSD=X':'FX:USDCNH',
-  'TWDUSD=X':'FX:USDTWD',
-};
 
 /* ── Boot ────────────────────────────────────────── */
 applyLang();
