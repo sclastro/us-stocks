@@ -384,7 +384,7 @@ function cardHTML(etf, data) {
     : `<span class="sk" style="width:50px;height:20px;border-radius:5px"></span>`;
 
   return `
-<a href="quote.html?symbol=${etf.sym}" class="etf-card">
+<a href="detail.html?symbol=${encodeURIComponent(etf.sym)}&type=etf&name=${encodeURIComponent(etf.name)}" class="etf-card">
   <div class="etf-card-sym">${etf.sym}</div>
   <div class="etf-card-name">${etf.name}</div>
   <div class="etf-card-desc">${etf.desc}</div>
