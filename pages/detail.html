@@ -211,32 +211,44 @@ if (isYahoo) {
 
 /* ── TradingView symbol map ──────────────────────── */
 const TV_SYMBOL_MAP = {
-  /* US Indices — FOREXCOM: prefix (verified free) */
-  '^GSPC':'FOREXCOM:SPXUSD',  '^DJI':'FOREXCOM:DJIUSD',    '^IXIC':'NASDAQ:IXIC',
-  '^RUT':'FOREXCOM:RUKUSD',   '^VIX':'TVC:VIX',
-  /* Asia */
-  '^N225':'INDEX:NKY',        '^HSI':'HSI:HSI',             '^HSCE':'HSI:HSCEI',
-  '000001.SS':'SSE:000001',   '399001.SZ':'SZSE:399001',
-  '^KS11':'KRX:KOSPI200',     '^BSESN':'BSE:SENSEX',        '^TWII':'TWSE:TAIEX',
-  '^STI':'SGX:STI',           '^KLSE':'MYX:FBMKLCI',        '^JKSE':'IDX:COMPOSITE',
-  '^SET.BK':'SET:SET',
-  /* Europe — FOREXCOM: prefix for major indices */
-  '^FTSE':'FOREXCOM:UKXUSD',  '^GDAXI':'FOREXCOM:GRXEUR',  '^FCHI':'FOREXCOM:FRXEUR',
-  '^STOXX50E':'FOREXCOM:ECXEUR', '^SSMI':'TVC:SMI',         '^AEX':'TVC:AEX',
-  '^IBEX':'TVC:IBEX35',       '^FTSEMIB.MI':'TVC:IT40',
-  /* Other markets */
-  '^AXJO':'INDEX:ASX200',     '^BVSP':'BMFBOVESPA:IBOV',    '^MXX':'BMV:IPC',
-  /* Commodities — exchange-native prefixes (verified free) */
-  'GC=F':'COMEX:GC1!',        'SI=F':'COMEX:SI1!',          'CL=F':'NYMEX:CL1!',
-  'BZ=F':'TVC:UKOIL',         'NG=F':'TVC:NATURALGAS',      'HG=F':'COMEX:HG1!',
-  'PL=F':'TVC:PLATINUM',      'ZC=F':'CBOT:ZC1!',           'ZS=F':'CBOT:ZS1!',
-  /* Crypto */
-  'BTC-USD':'BITSTAMP:BTCUSD', 'ETH-USD':'BITSTAMP:ETHUSD',
-  /* FX — free FX: / FX_IDC: prefixes */
-  'EURUSD=X':'FX:EURUSD',     'GBPUSD=X':'FX:GBPUSD',      'JPY=X':'FX:USDJPY',
-  'AUDUSD=X':'FX:AUDUSD',     'CADUSD=X':'FX:USDCAD',      'CHFUSD=X':'FX:USDCHF',
-  'CNYUSD=X':'FX:USDCNH',     'TWDUSD=X':'FX:USDTWD',      'HKDUSD=X':'FX:USDHKD',
-  'CNY=X':'FX:USDCNH',        'USDKRW=X':'FX_IDC:USDKRW',
+  /* US Indices */
+  '^GSPC':  'FOREXCOM:SPXUSD',
+  '^DJI':   'FOREXCOM:DJIUSD',
+  '^IXIC':  'FOREXCOM:NSXUSD',
+  '^RUT':   'FOREXCOM:RUKUSD',
+  /* Asia-Pacific */
+  '^HSI':   'HKEX:HSI',
+  '^N225':  'TVC:NI225',
+  '^AXJO':  'ASX:XJO',
+  '^KS11':  'KRX:KOSPI',
+  '^TWII':  'TWSE:TAIEX',
+  /* Europe */
+  '^FTSE':  'FOREXCOM:UKXUSD',
+  '^GDAXI': 'FOREXCOM:GRXEUR',
+  '^FCHI':  'EURONEXT:FCE1!',
+  '^STOXX50E': 'FOREXCOM:ECXEUR',
+  /* Commodities */
+  'GC=F':   'TVC:GOLD',
+  'CL=F':   'TVC:USOIL',
+  'SI=F':   'TVC:SILVER',
+  'BTC-USD': 'COINBASE:BTCUSD',
+  'ETH-USD': 'COINBASE:ETHUSD',
+  /* FX */
+  'EURUSD=X': 'FX:EURUSD',
+  'GBPUSD=X': 'FX:GBPUSD',
+  'USDJPY=X': 'FX:USDJPY',
+  'AUDUSD=X': 'FX:AUDUSD',
+  'USDCNH=X': 'FX:USDCNH',
+  'USDKRW=X': 'FX_IDC:USDKRW',
+  'USDHKD=X': 'FX:USDHKD',
+  /* FX aliases — matches indices.html Yahoo Finance symbol keys */
+  'JPY=X':    'FX:USDJPY',
+  'CNY=X':    'FX:USDCNH',
+  'HKDUSD=X': 'FX:USDHKD',
+  'CADUSD=X': 'FX:USDCAD',
+  'CHFUSD=X': 'FX:USDCHF',
+  'CNYUSD=X': 'FX:USDCNH',
+  'TWDUSD=X': 'FX:USDTWD',
 };
 
 /* ── Boot ────────────────────────────────────────── */
