@@ -20,6 +20,7 @@ const I18N = {
     wl_empty:'自選清單為空', wl_empty_sub:'在股票查詢頁搜尋，然後點擊「加入自選」',
     wl_price:'最新價', wl_change:'升跌', wl_updating:'更新中…',
     wl_updated:'已更新', wl_clear:'清除全部',
+    card_52w_label:'52週', card_ytd:'年初至今', card_vol:'成交量', card_aum:'規模',
     coming_soon:'敬請期待', coming_soon_desc:'此功能正在開發中，即將推出。',
     footer_left:'StockLens · 僅供研究及教育用途，不構成投資建議。',
     footer_delay:'報價延遲約 15 分鐘', footer_terms:'服務條款',
