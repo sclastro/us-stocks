@@ -66,4 +66,19 @@ const API = {
     if (data.error) throw new Error(data.error);
     return data; // { price, change, changePercent, marketState, currency }
   },
+
+  async getHistory(symbol, range, interval) {
+    if (!_useProxy) throw new Error('歷史圖表需要透過 netlify dev 或 Netlify 部署才能使用。');
+    const res = await fetch(
+      `/.netlify/functions/yahoo-history?symbol=${encodeURIComponent(symbol)}&range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`
+    );
+    if (!res.ok) {
+      let errMsg = `HTTP ${res.status}`;
+      try { const b = await res.json(); if (b?.error) errMsg = b.error; } catch {}
+      throw new Error(errMsg);
+    }
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data.bars;
+  },
 };
