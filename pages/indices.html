@@ -392,6 +392,7 @@ function updateCard(idx, data) {
   const priceEl = $(`ip-${id}`);
   const chgEl   = $(`ic-${id}`);
   const headEl  = $(`ih-${id}`);
+  const extraEl = $(`ie-${id}`);
   if (!priceEl || !chgEl) return;
 
   priceEl.textContent = fmtIdxPrice(data.price, idx.symbol);
@@ -401,6 +402,7 @@ function updateCard(idx, data) {
     headEl.querySelector('.idx-mkt-badge')?.remove();
     headEl.insertAdjacentHTML('beforeend', buildMktBadge(data.marketState));
   }
+  if (extraEl) extraEl.innerHTML = buildIdxExtra(idx, data);
 }
 
 function setStatus(text) { $('idxLoadStatus').textContent = text; }
