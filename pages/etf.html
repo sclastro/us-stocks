@@ -428,10 +428,10 @@ async function loadPrices(etfs, gen) {
   for (const etf of etfs) {
     if (gen !== loadGen) return;
     try {
-      const q = await API.getQuote(etf.sym);
+      const data = await API.getIndexQuote(etf.sym);
       if (gen !== loadGen) return;
-      priceCache[etf.sym] = q;
-      updateCard(etf.sym, q);
+      priceCache[etf.sym] = data;
+      updateCard(etf.sym, data);
     } catch { /* skip on error, card stays as skeleton */ }
     done++;
     if (done < total) {
