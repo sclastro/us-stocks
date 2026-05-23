@@ -119,13 +119,19 @@
             <span data-i18n="chart_title">價格走勢</span>
             <span class="chart-badge" id="chart-badge">1M · 日線</span>
           </h3>
-          <div class="timeframes">
-            <button class="tf-btn active" data-period="1M">1M</button>
-            <button class="tf-btn"        data-period="3M">3M</button>
-            <button class="tf-btn"        data-period="6M">6M</button>
-            <button class="tf-btn"        data-period="1Y">1Y</button>
-            <button class="tf-btn"        data-period="3Y">3Y</button>
-            <button class="tf-btn"        data-period="5Y">5Y</button>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="chart-type-wrap">
+              <button class="ct-btn active" data-type="candlestick" onclick="switchChartType('candlestick')">K線</button>
+              <button class="ct-btn" data-type="line" onclick="switchChartType('line')">線圖</button>
+            </div>
+            <div class="timeframes">
+              <button class="tf-btn active" data-period="1M">1M</button>
+              <button class="tf-btn"        data-period="3M">3M</button>
+              <button class="tf-btn"        data-period="6M">6M</button>
+              <button class="tf-btn"        data-period="1Y">1Y</button>
+              <button class="tf-btn"        data-period="3Y">3Y</button>
+              <button class="tf-btn"        data-period="5Y">5Y</button>
+            </div>
           </div>
         </div>
         <div class="chart-wrap">
