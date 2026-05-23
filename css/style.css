@@ -331,6 +331,21 @@ main{max-width:1240px;margin:0 auto;padding:44px 28px 80px}
 .idx-mkt-badge.pre{background:#dbeafe;color:#1d4ed8}
 .idx-mkt-badge.post{background:#f3e8ff;color:#7e22ce}
 
+/* ── Card extra section (ETF + Indices shared) ────────── */
+.etf-card-extra,.idx-card-extra{margin-top:9px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px;min-height:0}
+.card-extra-range{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-extra-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center}
+.card-extra-meta .dim{color:var(--muted-2)}
+.extra-up{color:var(--up)}
+.extra-dn{color:var(--down)}
+/* Override pos-bar styles for card context */
+.etf-card-extra .pos-bar-cell,.idx-card-extra .pos-bar-cell{flex-direction:row;align-items:center;gap:5px}
+.etf-card-extra .pos-bar-pct,.idx-card-extra .pos-bar-pct{font-size:10px;color:var(--muted-2);min-width:26px;flex-shrink:0}
+.etf-card-extra .pos-bar-wrap,.idx-card-extra .pos-bar-wrap{flex:1;width:auto;height:3px}
+/* Increase card min-heights to accommodate extra content */
+.etf-card{min-height:170px}
+.idx-card{min-height:180px}
+
 /* ── Footer ───────────────────────────────────────── */
 footer{max-width:1240px;margin:0 auto;padding:20px 28px 40px;font-size:12px;color:var(--muted-2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border)}
 footer a{color:var(--muted);text-decoration:none}
