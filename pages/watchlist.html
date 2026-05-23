@@ -213,19 +213,16 @@ function rowHTML(sym, data){
 </a>`;
 }
 
-/* ── Fetch live prices (batched 300ms) ───────────── */
+/* ── Fetch live prices via Yahoo Finance (batched 300ms) */
 async function fetchAllPrices(syms){
   $('wlStatus').textContent = tr('wl_updating');
   let done = 0;
 
   for (const sym of syms) {
     try {
-      const [q, p] = await Promise.all([
-        API.getQuote(sym),
-        API.getCompanyProfile(sym).catch(() => ({}))
-      ]);
-      priceCache[sym] = q;
-      updateRowPrice(sym, q, p);
+      const data = await API.getIndexQuote(sym);
+      priceCache[sym] = data;
+      updateRowPrice(sym, data);
     } catch { /* skip */ }
     done++;
     $('wlStatus').textContent = `${tr('wl_updating')} ${done}/${syms.length}`;
@@ -235,19 +232,37 @@ async function fetchAllPrices(syms){
   $('wlStatus').textContent = tr('wl_updated');
 }
 
-function updateRowPrice(sym, q, p){
-  const priceEl = document.getElementById(`wlprice-${sym}`);
-  const chgEl   = document.getElementById(`wlchg-${sym}`);
-  const nameEl  = document.getElementById(`wlname-${sym}`);
-  if (!priceEl || !chgEl) return;
+function updateRowPrice(sym, data){
+  const priceEl  = document.getElementById(`wlprice-${sym}`);
+  const chgEl    = document.getElementById(`wlchg-${sym}`);
+  const nameEl   = document.getElementById(`wlname-${sym}`);
+  const range52El = document.getElementById(`wl52r-${sym}`);
+  const pos52El   = document.getElementById(`wl52p-${sym}`);
+  const volEl     = document.getElementById(`wlvol-${sym}`);
+  const peEl      = document.getElementById(`wlpe-${sym}`);
+  if (!priceEl) return;
 
-  priceEl.textContent = fmt$(q.c);
+  priceEl.textContent = fmt$(data.price);
 
-  const up = q.dp >= 0;
-  chgEl.className = `wl-chg ${up ? 'up' : q.dp < 0 ? 'dn' : 'neu'}`;
-  chgEl.textContent = `${up?'+':''}${q.dp.toFixed(2)}% (${q.d>=0?'+':''}${Math.abs(q.d).toFixed(2)})`;
+  const pct = data.changePercent || 0;
+  chgEl.className   = `wl-chg ${pct > 0 ? 'up' : pct < 0 ? 'dn' : 'neu'}`;
+  chgEl.textContent = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}% (${(data.change||0) >= 0 ? '+' : ''}${Math.abs(data.change||0).toFixed(2)})`;
 
-  if (nameEl && p.name) nameEl.textContent = p.name;
+  if (nameEl && data.shortName) nameEl.textContent = data.shortName;
+
+  if (range52El) {
+    range52El.textContent = (data.fiftyTwoWeekHigh && data.fiftyTwoWeekLow)
+      ? `${data.fiftyTwoWeekLow.toFixed(2)} — ${data.fiftyTwoWeekHigh.toFixed(2)}`
+      : '—';
+  }
+
+  if (pos52El) {
+    const p = calcWeekPosition(data.price, data.fiftyTwoWeekLow, data.fiftyTwoWeekHigh);
+    pos52El.innerHTML = renderPositionBar(p);
+  }
+
+  if (volEl) volEl.textContent = formatVolume(data.volume);
+  if (peEl)  peEl.textContent  = data.trailingPE ? data.trailingPE.toFixed(1) : '—';
 }
 </script>
 </body>
