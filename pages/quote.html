@@ -250,7 +250,10 @@ $('watchBtn').addEventListener('click', () => {
 
 /* ── Auto-load from URL param ────────────────────── */
 const urlSym = new URLSearchParams(window.location.search).get('symbol');
-if (urlSym) qs(urlSym.toUpperCase());
+if (urlSym) {
+  const _s = urlSym.toUpperCase();
+  window.location.replace(`detail.html?symbol=${encodeURIComponent(_s)}&type=stock&name=${encodeURIComponent(_s)}`);
+}
 
 /* ── Clock ───────────────────────────────────────── */
 function tick(){
