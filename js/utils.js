@@ -129,3 +129,26 @@ function detectSentiment(title, summary){
 /* ── Skeleton helpers ────────────────────────────── */
 const sk  = (w,h,r='4px') => `<span class="sk" style="width:${w};height:${h};border-radius:${r}"></span>`;
 const skb = (w,h='14px',mb='8px') => `<div class="sk" style="display:block;width:${w};height:${h};border-radius:4px;margin-bottom:${mb}"></div>`;
+
+/* ── Watchlist extra-field helpers ───────────────── */
+function formatVolume(num) {
+  if (!num || isNaN(num)) return '—';
+  if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+  if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+  if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+  return String(num);
+}
+
+function calcWeekPosition(price, low52, high52) {
+  if (!price || !low52 || !high52 || high52 === low52) return null;
+  return Math.round((price - low52) / (high52 - low52) * 100);
+}
+
+function renderPositionBar(pct) {
+  if (pct === null || pct === undefined) {
+    return '<div class="pos-bar-cell"><span class="pos-bar-pct">—</span><div class="pos-bar-wrap"></div></div>';
+  }
+  const p     = Math.max(0, Math.min(100, pct));
+  const color = p < 30 ? '#ef4444' : p < 70 ? '#f97316' : '#22c55e';
+  return `<div class="pos-bar-cell"><span class="pos-bar-pct">${p}%</span><div class="pos-bar-wrap"><div class="pos-bar-fill" style="width:${p}%;background:${color}"></div></div></div>`;
+}
