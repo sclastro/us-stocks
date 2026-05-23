@@ -479,56 +479,118 @@ function syncWatchBtn() {
   btn.querySelector('.watch-label').textContent = on ? tr('on_watch') : tr('add_watch');
 }
 
-/* ── Chart (TradingView) ─────────────────────────── */
-const TV_RANGE    = {'1M':'1M','3M':'3M','6M':'6M','1Y':'12M','3Y':'36M','5Y':'60M'};
-const TV_INTERVAL = {'1M':'D', '3M':'D', '6M':'D', '1Y':'W',  '3Y':'W',  '5Y':'M' };
+/* ── Chart (Lightweight Charts + Yahoo Finance) ──── */
+const PERIOD_PARAMS = {
+  '1M': { range:'1mo',  interval:'1d'  },
+  '3M': { range:'3mo',  interval:'1d'  },
+  '6M': { range:'6mo',  interval:'1d'  },
+  '1Y': { range:'1y',   interval:'1wk' },
+  '3Y': { range:'5y',   interval:'1wk' },
+  '5Y': { range:'5y',   interval:'1mo' },
+};
 
-function buildTVUrl(tvSym, period) {
-  const p = new URLSearchParams({
-    symbol: tvSym, interval: TV_INTERVAL[period]||'D', range: TV_RANGE[period]||'1M',
-    theme: 'light', style: '1', locale: 'zh_TW', timezone: 'Asia/Hong_Kong',
-    toolbar_bg: 'ffffff', hide_side_toolbar: '0', allow_symbol_change: '1',
-    save_image: '0', hideideas: '1', hide_top_toolbar: '0',
+let lwChart     = null;
+let lwSeries    = null;
+let lwBars      = [];
+let lwChartType = 'candlestick';
+
+function tsToDateStr(ts) {
+  const d = new Date(ts * 1000);
+  return [
+    d.getUTCFullYear(),
+    String(d.getUTCMonth() + 1).padStart(2, '0'),
+    String(d.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function buildLWChart() {
+  const container = $('lw-chart');
+  if (!container) return;
+  if (lwChart) { lwChart.remove(); lwChart = null; lwSeries = null; }
+  container.innerHTML = '';
+
+  lwChart = LightweightCharts.createChart(container, {
+    width:  container.clientWidth || 600,
+    height: 320,
+    layout: { background: { color: '#ffffff' }, textColor: '#6b7280' },
+    grid:   { vertLines: { color: '#f3f4f6' }, horzLines: { color: '#f3f4f6' } },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: '#e5e7eb' },
+    timeScale: { borderColor: '#e5e7eb', timeVisible: false },
   });
-  return 'https://www.tradingview.com/widgetembed/?' + p.toString();
+
+  const ro = new ResizeObserver(() => {
+    if (lwChart && container.clientWidth > 0)
+      lwChart.applyOptions({ width: container.clientWidth });
+  });
+  ro.observe(container);
+}
+
+function renderLWData(bars) {
+  if (!lwChart) return;
+  if (lwSeries) { lwChart.removeSeries(lwSeries); lwSeries = null; }
+
+  const seen  = new Set();
+  const dated = bars
+    .map(b => ({ ...b, time: tsToDateStr(b.time) }))
+    .filter(b => { if (seen.has(b.time)) return false; seen.add(b.time); return true; });
+
+  if (lwChartType === 'candlestick') {
+    lwSeries = lwChart.addCandlestickSeries({
+      upColor: '#22c55e', downColor: '#ef4444',
+      borderUpColor: '#22c55e', borderDownColor: '#ef4444',
+      wickUpColor:   '#22c55e', wickDownColor:   '#ef4444',
+    });
+    lwSeries.setData(dated);
+  } else {
+    lwSeries = lwChart.addLineSeries({ color: '#3b82f6', lineWidth: 2 });
+    lwSeries.setData(dated.map(b => ({ time: b.time, value: b.close })));
+  }
+  lwChart.timeScale().fitContent();
 }
 
 function updateChartBadge() {
-  const lbl = (activePeriod==='3Y'||activePeriod==='5Y') ? tr('weekly') : tr('daily');
+  const p   = PERIOD_PARAMS[activePeriod];
+  const lbl = !p ? tr('daily')
+    : p.interval === '1mo' ? (currentLang === 'en' ? 'Monthly' : '月線')
+    : p.interval === '1wk' ? tr('weekly')
+    : tr('daily');
   $('chart-badge').textContent = `${activePeriod} · ${lbl}`;
 }
 
-function updateTVChart() {
-  const chartCard = $('chartCard');
-  const noChart   = $('tv-no-chart');
-  const frame     = $('tv-chart');
-  const loader    = $('tv-loader');
+async function updateLWChart() {
+  const p        = PERIOD_PARAMS[activePeriod] || PERIOD_PARAMS['1M'];
+  const loader   = $('chart-loader');
+  const chartDiv = $('lw-chart');
 
-  let tvSym;
-  if (isYahoo) {
-    tvSym = TV_SYMBOL_MAP[sym];
-    if (!tvSym) {
-      chartCard.hidden = false;
-      loader.hidden    = true;
-      frame.hidden     = true;
-      noChart.hidden   = false;
-      const tvBase = 'https://www.tradingview.com/chart/?symbol=';
-      $('tv-ext-link').href = tvBase + encodeURIComponent(sym);
-      updateChartBadge();
-      return;
-    }
-  } else {
-    tvSym = sym;
+  $('chartCard').hidden = false;
+  loader.hidden = false;
+  updateChartBadge();
+
+  if (!_useProxy) {
+    loader.hidden = true;
+    chartDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:280px;color:var(--muted);font-size:13px;text-align:center;padding:0 24px">圖表需要透過 netlify dev 或 Netlify 部署才能使用</div>';
+    return;
   }
 
-  chartCard.hidden = false;
-  noChart.hidden   = true;
-  frame.hidden     = false;
-  loader.hidden    = false;
-  frame.classList.add('tv-loading');
-  frame.onload = () => { frame.classList.remove('tv-loading'); loader.hidden = true; };
-  frame.src = buildTVUrl(tvSym, activePeriod);
-  updateChartBadge();
+  try {
+    const bars = await API.getHistory(sym, p.range, p.interval);
+    lwBars = bars;
+    if (!lwChart) buildLWChart();
+    renderLWData(bars);
+  } catch (err) {
+    if (lwChart) { lwChart.remove(); lwChart = null; lwSeries = null; }
+    chartDiv.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:280px;color:var(--muted);font-size:13px">圖表載入失敗：${esc(err.message)}</div>`;
+  } finally {
+    loader.hidden = true;
+  }
+}
+
+function switchChartType(type) {
+  if (lwChartType === type) return;
+  lwChartType = type;
+  document.querySelectorAll('.ct-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+  if (lwChart && lwBars.length) renderLWData(lwBars);
 }
 
 function switchPeriod(period, btn) {
