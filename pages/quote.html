@@ -110,78 +110,34 @@
 <script>
 'use strict';
 
-/* ── State ───────────────────────────────────────── */
 const $ = id => document.getElementById(id);
-let newsData      = [];
-let activePeriod  = '1M';
-let currentSym    = '';
-let currentIdxMode = false;
 
 /* ── Boot ────────────────────────────────────────── */
 applyLang();
 updateWlBadge();
 fetchChipQuotes();
-tick(); setInterval(tick, 1000);
 
 $('sym-input').addEventListener('input',   e => { e.target.value = e.target.value.toUpperCase(); });
 $('sym-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 $('srch-btn').addEventListener('click', doSearch);
 
 document.querySelectorAll('.lang-toggle button').forEach(b => {
-  b.addEventListener('click', () => {
-    setLang(b.dataset.lang);
-    if (currentSym) syncWatchBtn();
-    renderNews();
-    updateChartBadge();
-  });
+  b.addEventListener('click', () => setLang(b.dataset.lang));
 });
 
 document.querySelectorAll('.chip').forEach(c => {
   c.addEventListener('click', () => qs(c.dataset.sym));
 });
 
-document.querySelectorAll('.tf-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchPeriod(btn.dataset.period, btn));
-});
-
-$('watchBtn').addEventListener('click', () => {
-  if (!currentSym) return;
-  const btn = $('watchBtn');
-  if (watchlist.has(currentSym)) {
-    watchlist.delete(currentSym);
-  } else {
-    watchlist.add(currentSym);
-    btn.classList.remove('pop');
-    void btn.offsetWidth;
-    btn.classList.add('pop');
-  }
-  saveWatchlist();
-  syncWatchBtn();
-  updateWlBadge();
-  document.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('is-watched', watchlist.has(c.dataset.sym));
-  });
-});
-
-/* ── Auto-load from URL param ────────────────────── */
-const urlSym = new URLSearchParams(window.location.search).get('symbol');
-if (urlSym) {
-  const _s = urlSym.toUpperCase();
+/* ── Auto-load from URL param → redirect to detail ── */
+const _urlSym = new URLSearchParams(window.location.search).get('symbol');
+if (_urlSym) {
+  const _s = _urlSym.toUpperCase();
   window.location.replace(`detail.html?symbol=${encodeURIComponent(_s)}&type=stock&name=${encodeURIComponent(_s)}`);
 }
 
-/* ── Clock ───────────────────────────────────────── */
-function tick(){
-  const d  = new Date();
-  const hh = String(d.getHours()).padStart(2,'0');
-  const mm = String(d.getMinutes()).padStart(2,'0');
-  const ss = String(d.getSeconds()).padStart(2,'0');
-  const el = $('live-time');
-  if (el) el.textContent = `${hh}:${mm}:${ss}`;
-}
-
 /* ── Chip quote badges ───────────────────────────── */
-async function fetchChipQuotes(){
+async function fetchChipQuotes() {
   for (const sym of CONFIG.HOT_STOCKS) {
     try {
       const q    = await API.getQuote(sym);
@@ -190,7 +146,6 @@ async function fetchChipQuotes(){
         const up = q.dp >= 0;
         chip.innerHTML = `${sym} <span class="dlt ${up?'':'dn'}">${up?'+':''}${q.dp.toFixed(2)}%</span>`;
         if (watchlist.has(sym)) chip.classList.add('is-watched');
-        if (sym === currentSym)  chip.classList.add('active');
       }
     } catch { /* ignore */ }
     await new Promise(r => setTimeout(r, 400));
@@ -198,338 +153,22 @@ async function fetchChipQuotes(){
 }
 
 /* ── Search ──────────────────────────────────────── */
-function qs(sym){ $('sym-input').value = sym; doSearch(); }
+function qs(sym) { $('sym-input').value = sym; doSearch(); }
 
-function doSearch(){
+function doSearch() {
   const sym = $('sym-input').value.trim().toUpperCase();
   if (!sym) return;
 
-  /* Block index / commodity / forex — direct to indices page */
   if (sym.startsWith('^') || sym.includes('=F') || sym.includes('=X')) {
-    $('st-err').hidden  = false;
-    $('results').hidden = true;
+    $('st-err').hidden = false;
     $('err-msg').textContent = currentLang === 'zh'
       ? '指數、商品及匯率，請前往「環球指數」頁面查看。'
-      : 'For indices, commodities and FX rates, please visit the Global Indices page.';
+      : 'For indices, commodities and FX, please visit the Global Indices page.';
     return;
   }
 
+  $('st-err').hidden = true;
   window.location.href = `detail.html?symbol=${encodeURIComponent(sym)}&type=stock&name=${encodeURIComponent(sym)}`;
-}
-
-/* ── Render: Quote ───────────────────────────────── */
-function renderQuote(q, p, m, sym){
-  const isUp = (q.d || 0) >= 0;
-  const tint = TINTS[sym] || DEFAULT_TINT;
-
-  $('stock-logo').textContent = sym.slice(0,2);
-  const sh = $('stock-head');
-  sh.style.setProperty('--stock-fg', tint.fg);
-  sh.style.setProperty('--stock-bg', tint.bg);
-  sh.style.setProperty('--stock-bd', tint.bd);
-
-  $('r-sym').textContent      = sym;
-  $('r-name').textContent     = p.name  || sym;
-  $('r-exchange').textContent = p.exchange        || '—';
-  $('r-sec').textContent      = p.finnhubIndustry || '—';
-  $('r-currency').textContent = p.currency        || 'USD';
-
-  $('r-price').textContent = fmt$(q.c);
-
-  const d = $('r-delta');
-  d.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="${isUp?'m5 15 7-7 7 7':'m5 9 7 7 7-7'}"/></svg>${isUp?'+':''}${Math.abs(q.d||0).toFixed(2)} (${isUp?'+':''}${Math.abs(q.dp||0).toFixed(2)}%)`;
-  d.className = 'price-delta ' + (isUp ? 'up' : 'down');
-
-  $('r-open').textContent    = fmt$(q.o);
-  $('r-hl').textContent      = `${fmt$(q.h)} / ${fmt$(q.l)}`;
-  $('r-hl-sub').textContent  = `Range $${(q.h - q.l).toFixed(2)}`;
-  $('r-vol').textContent     = '—';
-  $('r-cap').textContent     = p.marketCapitalization ? fmtCap(p.marketCapitalization) : '—';
-
-  const h52 = m?.metric?.['52WeekHigh'];
-  const l52 = m?.metric?.['52WeekLow'];
-  if (h52 && l52){
-    $('r-52').textContent    = `${h52.toFixed(2)} — ${l52.toFixed(2)}`;
-    const pos = Math.round(100 * (q.c - l52) / (h52 - l52));
-    $('r-52pos').textContent = `${Math.max(0,Math.min(100,pos))}${tr('of_range')}`;
-  } else {
-    $('r-52').textContent    = '—';
-    $('r-52pos').textContent = '';
-  }
-}
-
-/* ── Skeletons ───────────────────────────────────── */
-function showQuoteSkeleton(){
-  $('r-sym').innerHTML   = sk('46px','11px','3px');
-  $('r-name').innerHTML  = sk('160px','14px');
-  $('r-price').innerHTML = sk('155px','38px');
-  const d = $('r-delta'); d.className='price-delta'; d.innerHTML=sk('105px','22px','6px');
-  ['r-open','r-hl','r-vol','r-cap','r-52'].forEach(id => { if ($(id)) $(id).innerHTML=sk('68px','14px'); });
-  $('r-exchange').textContent=''; $('r-sec').textContent=''; $('r-currency').textContent='';
-  $('r-hl-sub').textContent=''; $('r-52pos').textContent='';
-  $('stock-logo').textContent='';
-}
-function showNewsSkeleton(){
-  $('news-list').innerHTML = Array(5).fill(0).map(() => `
-    <div class="news-item" style="pointer-events:none;user-select:none">
-      <div class="news-meta" style="margin-bottom:8px">${sk('48px','9px','3px')} ${sk('60px','9px','3px')}</div>
-      ${skb('90%','13px','4px')}${skb('72%','13px','4px')}${skb('50%','11px','0')}
-    </div>`).join('');
-}
-
-/* ── Watchlist sync ──────────────────────────────── */
-function syncWatchBtn(){
-  const btn = $('watchBtn');
-  if (!btn || !currentSym) return;
-  const on = watchlist.has(currentSym);
-  btn.classList.toggle('is-on', on);
-  btn.setAttribute('aria-pressed', String(on));
-  btn.querySelector('.watch-label').textContent = on ? tr('on_watch') : tr('add_watch');
-}
-
-/* ── Chart (TradingView) ─────────────────────────── */
-const TV_RANGE    = {'1M':'1M','3M':'3M','6M':'6M','1Y':'12M','3Y':'36M','5Y':'60M'};
-const TV_INTERVAL = {'1M':'D', '3M':'D', '6M':'D', '1Y':'W',  '3Y':'W',  '5Y':'M' };
-
-function buildTVUrl(sym, period){
-  const p = new URLSearchParams({
-    symbol: sym, interval: TV_INTERVAL[period]||'D', range: TV_RANGE[period]||'1M',
-    theme: 'light', style: '1', locale: 'zh_TW', timezone: 'Asia/Hong_Kong',
-    toolbar_bg: 'ffffff', hide_side_toolbar: '0', allow_symbol_change: '1',
-    save_image: '0', hideideas: '1', hide_top_toolbar: '0',
-  });
-  return 'https://www.tradingview.com/widgetembed/?' + p.toString();
-}
-function updateChartBadge(){
-  const el = $('chart-badge');
-  if (!el) return;
-  const lbl = (activePeriod==='3Y'||activePeriod==='5Y') ? tr('weekly') : tr('daily');
-  el.textContent = `${activePeriod} · ${lbl}`;
-}
-function updateTVChart(){
-  if (!currentSym) return;
-  const sym = currentSym;
-  const chartCard = $('tv-chart')?.closest('.card');
-
-  let tvSym;
-  if (currentIdxMode) {
-    tvSym = TV_SYMBOL_MAP[sym];
-    if (!tvSym) { if (chartCard) chartCard.hidden = true; return; }
-  } else {
-    tvSym = sym;
-  }
-  if (chartCard) chartCard.hidden = false;
-
-  const frame = $('tv-chart'), loader = $('tv-loader');
-  loader.hidden = false;
-  frame.classList.add('tv-loading');
-  frame.onload = () => {
-    if (currentSym !== sym) return;
-    frame.classList.remove('tv-loading');
-    loader.hidden = true;
-  };
-  frame.src = buildTVUrl(tvSym, activePeriod);
-  updateChartBadge();
-}
-function switchPeriod(period, btn){
-  activePeriod = period;
-  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  updateTVChart();
-}
-
-/* ── Index / Commodity / FX support ─────────────── */
-const TV_SYMBOL_MAP = {
-  '^GSPC':'SP:SPX',     '^DJI':'DJ:DJI',       '^IXIC':'NASDAQ:NDX',
-  '^RUT':'TVC:RUT',     '^VIX':'TVC:VIX',
-  '^N225':'TVC:NI225',  '^HSI':'HSI:HSI',       '^HSCE':'HSI:HSCEI',
-  '000001.SS':'SSE:000001', '399001.SZ':'SZSE:399001',
-  '^KS11':'KRX:KOSPI',  '^BSESN':'BSE:SENSEX', '^TWII':'TWSE:TAIEX',
-  '^STI':'SGX:STI',     '^KLSE':'MYX:FBMKLCI', '^JKSE':'IDX:COMPOSITE',
-  '^SET.BK':'SET:SET',
-  '^FTSE':'TVC:UKX',    '^GDAXI':'TVC:DAX',    '^FCHI':'TVC:CAC40',
-  '^STOXX50E':'TVC:SX5E', '^SSMI':'TVC:SMI',   '^AEX':'TVC:AEX',
-  '^IBEX':'TVC:IBEX35', '^FTSEMIB.MI':'TVC:IT40',
-  '^AXJO':'ASX:XJO',    '^BVSP':'BMFBOVESPA:IBOV', '^MXX':'BMV:IPC',
-  'GC=F':'TVC:GOLD',    'SI=F':'TVC:SILVER',   'CL=F':'TVC:USOIL',
-  'BZ=F':'TVC:UKOIL',   'NG=F':'TVC:NATURALGAS', 'HG=F':'TVC:COPPER',
-  'PL=F':'TVC:PLATINUM', 'ZC=F':'CBOT:ZC1!',   'ZS=F':'CBOT:ZS1!',
-  'EURUSD=X':'FX:EURUSD', 'GBPUSD=X':'FX:GBPUSD', 'JPY=X':'FX:USDJPY',
-  'AUDUSD=X':'FX:AUDUSD', 'CADUSD=X':'FX:USDCAD', 'CHFUSD=X':'FX:USDCHF',
-  'CNYUSD=X':'FX:USDCNH', 'TWDUSD=X':'FX:USDTWD', 'HKDUSD=X':'FX:USDHKD',
-};
-
-function fmtIdxPrice(price, sym) {
-  if (typeof price !== 'number' || isNaN(price)) return '—';
-  if (sym.endsWith('=X')) return price.toFixed(4);
-  return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-function fmtIdxChange(change, sym) {
-  if (typeof change !== 'number' || isNaN(change)) return '—';
-  const sign = change >= 0 ? '+' : '';
-  if (sym.endsWith('=X')) return sign + change.toFixed(4);
-  const str = Math.abs(change).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return (change >= 0 ? '+' : '-') + str;
-}
-function fmtVol(v) {
-  if (!v || isNaN(v)) return '—';
-  if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
-  if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
-  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
-  return String(v);
-}
-
-async function doIndexSearch(sym, hintName) {
-  currentSym   = sym;
-  newsData     = [];
-  activePeriod = '1M';
-
-  const btn = $('srch-btn');
-  btn.disabled    = true;
-  btn.textContent = tr('searching');
-
-  $('st-err').hidden  = true;
-  $('results').hidden = false;
-  showQuoteSkeleton();
-
-  const nc = document.querySelector('.news-card');
-  if (nc) nc.hidden = true;
-  $('watchBtn').hidden = true;
-
-  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.tf-btn').classList.add('active');
-  $('tv-loader').hidden = false;
-  $('tv-chart').classList.add('tv-loading');
-  $('tv-chart').onload = null;
-  $('tv-chart').src    = '';
-
-  try {
-    const data = await API.getIndexQuote(sym);
-    if (currentSym !== sym) return;
-    renderIndexQuote(data, sym, hintName || data.shortName || sym);
-    updateTVChart();
-  } catch(err) {
-    $('results').hidden = true;
-    $('st-err').hidden  = false;
-    $('err-msg').textContent = err.message || '查詢失敗，請稍後再試';
-  }
-  btn.disabled    = false;
-  btn.textContent = tr('search');
-}
-
-function renderIndexQuote(data, sym, name) {
-  const initials = sym.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '--';
-  $('stock-logo').textContent = initials;
-
-  const sh = $('stock-head');
-  sh.style.setProperty('--stock-fg', 'var(--ink-2)');
-  sh.style.setProperty('--stock-bg', 'var(--surface-2)');
-  sh.style.setProperty('--stock-bd', 'var(--border)');
-
-  $('r-sym').textContent  = sym;
-  $('r-name').textContent = name;
-
-  const mktLbl = { REGULAR:'開市', PRE:'盤前', POST:'盤後', POSTPOST:'盤後', CLOSED:'收市' };
-  $('r-exchange').textContent = mktLbl[data.marketState] || '收市';
-  $('r-sec').textContent      = '';
-  $('r-currency').textContent = data.currency || '';
-
-  $('r-price').textContent = fmtIdxPrice(data.price, sym);
-
-  const d = $('r-delta');
-  if (sym === '^VIX') {
-    const hi = data.price > 20;
-    d.className = 'price-delta neu';
-    d.innerHTML = `<span>${hi ? '高波動 &gt;20' : '低波動 &lt;20'}</span>`;
-  } else {
-    const isUp  = (data.change || 0) >= 0;
-    const arrow = isUp ? 'm5 15 7-7 7 7' : 'm5 9 7 7 7-7';
-    const pct   = `${isUp ? '+' : ''}${(data.changePercent || 0).toFixed(2)}%`;
-    const chg   = fmtIdxChange(data.change, sym);
-    d.className = 'price-delta ' + (isUp ? 'up' : 'down');
-    d.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="${arrow}"/></svg>${pct} (${chg})`;
-  }
-
-  $('r-open').textContent   = fmtIdxPrice(data.open, sym);
-  $('r-hl').textContent     = (data.dayHigh && data.dayLow)
-    ? `${fmtIdxPrice(data.dayHigh, sym)} / ${fmtIdxPrice(data.dayLow, sym)}` : '—';
-  $('r-hl-sub').textContent = '';
-  $('r-vol').textContent    = fmtVol(data.volume);
-  $('r-cap').textContent    = '—';
-
-  if (data.fiftyTwoWeekHigh && data.fiftyTwoWeekLow) {
-    $('r-52').textContent    = `${fmtIdxPrice(data.fiftyTwoWeekHigh, sym)} — ${fmtIdxPrice(data.fiftyTwoWeekLow, sym)}`;
-    const pos = Math.round(100 * (data.price - data.fiftyTwoWeekLow) / (data.fiftyTwoWeekHigh - data.fiftyTwoWeekLow));
-    $('r-52pos').textContent = `${Math.max(0, Math.min(100, pos))}${tr('of_range')}`;
-  } else {
-    $('r-52').textContent    = '—';
-    $('r-52pos').textContent = '';
-  }
-}
-
-/* ── Render: News ────────────────────────────────── */
-function renderNews(){
-  const el = $('news-list');
-  $('newsCount').textContent = newsData.length;
-  if (!newsData.length){
-    el.innerHTML = `<div style="padding:28px 22px;text-align:center;color:var(--muted-2);font-size:13px;line-height:1.7">暫無最新新聞，請稍後再試</div>`;
-    return;
-  }
-  const sl = {pos:tr('sent_pos'), neg:tr('sent_neg'), neu:tr('sent_neu')};
-  el.innerHTML = newsData.slice(0,12).map((item,i) => {
-    const date       = tsToDate(item.datetime);
-    const hasSummary = !!(item.summary?.trim() && item.summary !== item.headline);
-    const sent       = detectSentiment(item.headline, item.summary);
-    return `
-<div class="news-item">
-  <div class="news-meta">
-    <span class="n-src">${esc(item.source||'')}</span>
-    <span class="n-dot"></span>
-    <span>${date}</span>
-    <span class="n-sent ${sent}">${sl[sent]}</span>
-  </div>
-  <div class="news-title">
-    <a href="${esc(item.url||'#')}" target="_blank" rel="noopener noreferrer">${esc(item.headline||'')}</a>
-  </div>
-  ${hasSummary ? `<p class="news-summary" id="ns-${i}">${esc(item.summary)}</p>` : ''}
-  <div class="news-actions">
-    ${hasSummary ? `<button class="btn-ghost" id="ntr-${i}" onclick="doTranslate(${i})"><span class="tr-lbl">${tr('tr_btn')}</span></button>` : ''}
-  </div>
-</div>`;
-  }).join('');
-}
-
-/* ── Translate ───────────────────────────────────── */
-async function doTranslate(i){
-  const item = newsData[i];
-  const btn  = $(`ntr-${i}`);
-  const pEl  = $(`ns-${i}`);
-  if (!btn || !pEl) return;
-
-  if (btn.classList.contains('is-on')){
-    pEl.textContent = item.summary; pEl.className='news-summary';
-    btn.classList.remove('is-on'); btn.querySelector('.tr-lbl').textContent = tr('tr_btn');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.querySelector('.tr-lbl').innerHTML = `<span class="mini-spin"></span> ${tr('tr_ing')}`;
-
-  try {
-    const text = `${item.headline||''}. ${item.summary||''}`.trim().substring(0,1000);
-    const url  = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${encodeURIComponent(text)}`;
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error('http');
-    const data = await res.json();
-    const out  = data[0].map(s => s[0]).join('');
-    if (!out) throw new Error('empty');
-    pEl.textContent = out; pEl.classList.add('translated');
-    btn.classList.add('is-on'); btn.disabled = false;
-    btn.querySelector('.tr-lbl').textContent = tr('tr_orig');
-  } catch {
-    btn.disabled = false;
-    btn.querySelector('.tr-lbl').textContent = '↺ 失敗，點擊重試';
-  }
 }
 </script>
 </body>
