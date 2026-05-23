@@ -49,6 +49,7 @@ exports.handler = async (event) => {
       fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh              ?? null,
       fiftyTwoWeekLow:  meta.fiftyTwoWeekLow               ?? null,
       shortName:        meta.shortName || meta.longName    || null,
+      trailingPE:       meta.trailingPE                    ?? null,
     });
   } catch (err) {
     return json(500, { error: err.message });
