@@ -43,6 +43,7 @@ const I18N = {
     wl_empty:'Your watchlist is empty', wl_empty_sub:'Search for a stock and click "Add to Watchlist"',
     wl_price:'Price', wl_change:'Change', wl_updating:'Updating…',
     wl_updated:'Updated', wl_clear:'Clear all',
+    card_52w_label:'52W', card_ytd:'YTD', card_vol:'Vol', card_aum:'AUM',
     coming_soon:'Coming Soon', coming_soon_desc:'This feature is under development and will be available soon.',
     footer_left:'StockLens · For research and educational use. Not financial advice.',
     footer_delay:'Quotes delayed ~15 min', footer_terms:'Terms',
