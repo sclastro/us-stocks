@@ -265,7 +265,7 @@ function buildIdxExtra(idx, data) {
     ytdHtml = `<span class="${cls}">${tr('card_ytd')}: ${sign}${pctVal.toFixed(2)}%</span>`;
   }
   const openHtml = open != null
-    ? `<span>${currentLang === 'zh' ? '開盤' : 'Open'}: ${fmtIdxPrice(open, sym)}</span>`
+    ? `<span>${tr('k_open')}: ${fmtIdxPrice(open, sym)}</span>`
     : '';
 
   const metaParts = [ytdHtml, openHtml].filter(Boolean);
