@@ -175,7 +175,7 @@ function rowHTML(sym, data){
     : '—';
 
   return `
-<a href="quote.html?symbol=${sym}" class="wl-row" data-sym="${sym}">
+<a href="detail.html?symbol=${encodeURIComponent(sym)}&type=stock&name=${encodeURIComponent(sym)}" class="wl-row" data-sym="${sym}">
   <div class="wl-sym-col">
     <div class="wl-sym-logo">${sym.slice(0,2)}</div>
     <div>
