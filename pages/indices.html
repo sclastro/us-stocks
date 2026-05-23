@@ -261,7 +261,7 @@ function cardHTML(idx, data) {
     : `<span class="sk" style="width:80px;height:20px;border-radius:5px"></span>`;
 
   return `
-<a href="quote.html?symbol=${encodeURIComponent(idx.symbol)}&type=index&name=${encodeURIComponent(idx.name)}" class="idx-card">
+<a href="detail.html?symbol=${encodeURIComponent(idx.symbol)}&type=${symType(idx.symbol)}&name=${encodeURIComponent(idx.name)}" class="idx-card">
   <div class="idx-card-head" id="ih-${id}">
     <div class="idx-card-name">${idx.name}</div>
     ${badge}
