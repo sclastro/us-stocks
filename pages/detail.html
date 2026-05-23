@@ -201,6 +201,9 @@ if (isYahoo) {
   $('nav-indices').classList.add('active');
   $('bn-indices').classList.add('active');
   $('poweredSrc').textContent = 'Yahoo Finance';
+} else if (symType === 'etf') {
+  $('nav-etf').classList.add('active');
+  $('bn-etf').classList.add('active');
 } else {
   $('nav-quote').classList.add('active');
   $('bn-quote').classList.add('active');
