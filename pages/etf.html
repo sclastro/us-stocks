@@ -442,12 +442,14 @@ async function loadPrices(etfs, gen) {
   if (gen === loadGen) setStatus('');
 }
 
-function updateCard(sym, q) {
+function updateCard(sym, data) {
   const priceEl = $(`ep-${sym}`);
   const chgEl   = $(`ec-${sym}`);
+  const extraEl = $(`ee-${sym}`);
   if (!priceEl || !chgEl) return;
-  priceEl.textContent = fmt$(q.c);
-  chgEl.innerHTML     = buildChgSpan(q.dp, q.d);
+  priceEl.textContent = fmt$(data.price);
+  chgEl.innerHTML     = buildChgSpan(data.changePercent, data.change);
+  if (extraEl) extraEl.innerHTML = buildEtfExtra(data);
 }
 
 function setStatus(text) { $('loadStatus').textContent = text; }
