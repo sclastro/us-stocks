@@ -11,19 +11,25 @@ exports.handler = async (event) => {
     return json(400, { error: 'Missing symbol parameter' });
   }
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}&formatted=false&lang=en&region=US`;
+
+  const reqHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Accept': 'application/json',
+  };
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-      }
-    });
+    const [chartRes, quoteData] = await Promise.all([
+      fetch(chartUrl, { headers: reqHeaders }),
+      fetch(quoteUrl, { headers: reqHeaders })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    ]);
 
-    if (!res.ok) return json(res.status, { error: `Yahoo returned HTTP ${res.status}` });
+    if (!chartRes.ok) return json(chartRes.status, { error: `Yahoo returned HTTP ${chartRes.status}` });
 
-    const raw = await res.json();
+    const raw = await chartRes.json();
     const result = raw?.chart?.result?.[0];
 
     if (!result) {
@@ -35,6 +41,8 @@ exports.handler = async (event) => {
     const prevClose = meta.previousClose ?? meta.chartPreviousClose ?? price;
     const change = meta.regularMarketChange ?? (price - prevClose);
     const changePercent = meta.regularMarketChangePercent ?? (prevClose ? ((price - prevClose) / prevClose) * 100 : 0);
+
+    const q = quoteData?.quoteResponse?.result?.[0];
 
     return json(200, {
       price,
@@ -50,6 +58,8 @@ exports.handler = async (event) => {
       fiftyTwoWeekLow:  meta.fiftyTwoWeekLow               ?? null,
       shortName:        meta.shortName || meta.longName    || null,
       trailingPE:       meta.trailingPE                    ?? null,
+      totalAssets:      q?.totalAssets                     ?? null,
+      ytdReturn:        q?.ytdReturn                       ?? null,
     });
   } catch (err) {
     return json(500, { error: err.message });
