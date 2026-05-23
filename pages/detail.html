@@ -533,17 +533,31 @@ function updateChartBadge() {
 
 function updateTVChart() {
   const chartCard = $('chartCard');
+  const noChart   = $('tv-no-chart');
+  const frame     = $('tv-chart');
+  const loader    = $('tv-loader');
+
   let tvSym;
   if (isYahoo) {
     tvSym = TV_SYMBOL_MAP[sym];
-    if (!tvSym) { chartCard.hidden = true; return; }
+    if (!tvSym) {
+      chartCard.hidden = false;
+      loader.hidden    = true;
+      frame.hidden     = true;
+      noChart.hidden   = false;
+      const tvBase = 'https://www.tradingview.com/chart/?symbol=';
+      $('tv-ext-link').href = tvBase + encodeURIComponent(sym);
+      updateChartBadge();
+      return;
+    }
   } else {
     tvSym = sym;
   }
-  chartCard.hidden = false;
 
-  const frame = $('tv-chart'), loader = $('tv-loader');
-  loader.hidden = false;
+  chartCard.hidden = false;
+  noChart.hidden   = true;
+  frame.hidden     = false;
+  loader.hidden    = false;
   frame.classList.add('tv-loading');
   frame.onload = () => { frame.classList.remove('tv-loading'); loader.hidden = true; };
   frame.src = buildTVUrl(tvSym, activePeriod);
