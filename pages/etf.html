@@ -377,10 +377,10 @@ function renderGrid() {
 
 function cardHTML(etf, data) {
   const priceInner = data
-    ? fmt$(data.c)
+    ? fmt$(data.price)
     : `<span class="sk" style="width:66px;height:13px;border-radius:3px"></span>`;
   const chgInner = data
-    ? buildChgSpan(data.dp, data.d)
+    ? buildChgSpan(data.changePercent, data.change)
     : `<span class="sk" style="width:50px;height:20px;border-radius:5px"></span>`;
 
   return `
@@ -392,7 +392,25 @@ function cardHTML(etf, data) {
     <div class="etf-card-price" id="ep-${etf.sym}">${priceInner}</div>
     <div id="ec-${etf.sym}">${chgInner}</div>
   </div>
+  <div class="etf-card-extra" id="ee-${etf.sym}">${data ? buildEtfExtra(data) : ''}</div>
 </a>`;
+}
+
+function buildEtfExtra(data) {
+  const { price, fiftyTwoWeekLow: lo, fiftyTwoWeekHigh: hi, volume, totalAssets } = data;
+  const hasRange  = lo != null && hi != null;
+  const rangeText = hasRange ? `52W: ${fmt$(lo)} — ${fmt$(hi)}` : null;
+  const pct       = hasRange ? calcWeekPosition(price, lo, hi) : null;
+  const volText   = volume ? `Vol: ${formatVolume(volume)}` : null;
+  const aumVal    = fmtAssets(totalAssets);
+  const aumText   = aumVal ? `AUM: ${aumVal}` : null;
+  const metaParts = [volText, aumText].filter(Boolean);
+  if (!rangeText && !metaParts.length) return '';
+  return [
+    rangeText    ? `<div class="card-extra-range">${rangeText}</div>` : '',
+    hasRange     ? renderPositionBar(pct) : '',
+    metaParts.length ? `<div class="card-extra-meta">${metaParts.join('<span class="dim"> | </span>')}</div>` : '',
+  ].filter(Boolean).join('');
 }
 
 function buildChgSpan(dp, d) {
