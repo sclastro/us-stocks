@@ -194,6 +194,13 @@ const priceCache = {};
 const $ = id => document.getElementById(id);
 const activeCat = () => CATS.find(c => c.id === activeTab);
 
+function symType(sym) {
+  if (sym.endsWith('=X')) return 'forex';
+  if (sym.endsWith('=F')) return 'commodity';
+  if (sym === 'URA')      return 'commodity';
+  return 'index';
+}
+
 function symId(sym) {
   return sym.replace(/[^A-Za-z0-9]/g, '_');
 }
