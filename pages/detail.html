@@ -211,24 +211,24 @@ if (isYahoo) {
 
 /* ── TradingView symbol map ──────────────────────── */
 const TV_SYMBOL_MAP = {
-  /* US Indices — free INDEX:/SP:/DJ:/NASDAQ: prefixes */
-  '^GSPC':'SP:SPX',           '^DJI':'DJ:DJI',             '^IXIC':'NASDAQ:IXIC',
-  '^RUT':'CAPITALCOM:RTY',    '^VIX':'TVC:VIX',
+  /* US Indices — FOREXCOM: prefix (verified free) */
+  '^GSPC':'FOREXCOM:SPXUSD',  '^DJI':'FOREXCOM:DJIUSD',    '^IXIC':'NASDAQ:IXIC',
+  '^RUT':'FOREXCOM:RUKUSD',   '^VIX':'TVC:VIX',
   /* Asia */
   '^N225':'INDEX:NKY',        '^HSI':'HSI:HSI',             '^HSCE':'HSI:HSCEI',
   '000001.SS':'SSE:000001',   '399001.SZ':'SZSE:399001',
-  '^KS11':'KRX:KOSPI',        '^BSESN':'BSE:SENSEX',        '^TWII':'TWSE:TAIEX',
+  '^KS11':'KRX:KOSPI200',     '^BSESN':'BSE:SENSEX',        '^TWII':'TWSE:TAIEX',
   '^STI':'SGX:STI',           '^KLSE':'MYX:FBMKLCI',        '^JKSE':'IDX:COMPOSITE',
   '^SET.BK':'SET:SET',
-  /* Europe — free INDEX: prefix */
-  '^FTSE':'INDEX:UKX',        '^GDAXI':'INDEX:DEU',          '^FCHI':'INDEX:CAC40',
-  '^STOXX50E':'INDEX:STOXX50E', '^SSMI':'TVC:SMI',           '^AEX':'TVC:AEX',
+  /* Europe — FOREXCOM: prefix for major indices */
+  '^FTSE':'FOREXCOM:UKXUSD',  '^GDAXI':'FOREXCOM:GRXEUR',  '^FCHI':'FOREXCOM:FRXEUR',
+  '^STOXX50E':'FOREXCOM:ECXEUR', '^SSMI':'TVC:SMI',         '^AEX':'TVC:AEX',
   '^IBEX':'TVC:IBEX35',       '^FTSEMIB.MI':'TVC:IT40',
   /* Other markets */
-  '^AXJO':'ASX:XJO',          '^BVSP':'BMFBOVESPA:IBOV',    '^MXX':'BMV:IPC',
-  /* Commodities — free TVC: prefix */
-  'GC=F':'TVC:GOLD',          'SI=F':'TVC:SILVER',          'CL=F':'TVC:USOIL',
-  'BZ=F':'TVC:UKOIL',         'NG=F':'TVC:NATURALGAS',      'HG=F':'TVC:COPPER',
+  '^AXJO':'INDEX:ASX200',     '^BVSP':'BMFBOVESPA:IBOV',    '^MXX':'BMV:IPC',
+  /* Commodities — exchange-native prefixes (verified free) */
+  'GC=F':'COMEX:GC1!',        'SI=F':'COMEX:SI1!',          'CL=F':'NYMEX:CL1!',
+  'BZ=F':'TVC:UKOIL',         'NG=F':'TVC:NATURALGAS',      'HG=F':'COMEX:HG1!',
   'PL=F':'TVC:PLATINUM',      'ZC=F':'CBOT:ZC1!',           'ZS=F':'CBOT:ZS1!',
   /* Crypto */
   'BTC-USD':'BITSTAMP:BTCUSD', 'ETH-USD':'BITSTAMP:ETHUSD',
