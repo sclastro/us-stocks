@@ -285,80 +285,21 @@ async function fetchChipQuotes(){
 /* ── Search ──────────────────────────────────────── */
 function qs(sym){ $('sym-input').value = sym; doSearch(); }
 
-async function doSearch(){
+function doSearch(){
   const sym = $('sym-input').value.trim().toUpperCase();
   if (!sym) return;
 
-  /* ── Detect index / commodity / forex mode ── */
-  const _up    = new URLSearchParams(window.location.search);
-  const _uSym  = _up.get('symbol')?.toUpperCase();
-  const _uType = _up.get('type');
-  const _hint  = (_uSym === sym) ? (_up.get('name') || '') : '';
-  currentIdxMode = sym.startsWith('^') || sym.includes('=F') || sym.includes('=X')
-                   || (_uType === 'index' && _uSym === sym);
-
-  if (currentIdxMode) { await doIndexSearch(sym, _hint); return; }
-
-  /* ── Stock mode: restore any hidden panels ── */
-  const _nc = document.querySelector('.news-card');
-  if (_nc) _nc.hidden = false;
-  $('watchBtn').hidden = false;
-  const _cc = $('tv-chart')?.closest('.card');
-  if (_cc) _cc.hidden = false;
-
-  currentSym   = sym;
-  newsData     = [];
-  activePeriod = '1M';
-
-  const btn = $('srch-btn');
-  btn.disabled    = true;
-  btn.textContent = tr('searching');
-
-  $('st-err').hidden  = true;
-  $('results').hidden = false;
-  showQuoteSkeleton();
-  showNewsSkeleton();
-
-  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.tf-btn').classList.add('active');
-  $('tv-loader').hidden = false;
-  $('tv-chart').classList.add('tv-loading');
-  $('tv-chart').onload  = null;
-  $('tv-chart').src     = '';
-
-  const quoteP   = API.getQuote(sym);
-  const profileP = API.getCompanyProfile(sym).catch(() => ({}));
-  const metricP  = API.getMetrics(sym).catch(() => ({}));
-  const newsP    = API.getNews(sym);
-
-  let quote, profile, metric;
-  try {
-    [quote, profile, metric] = await Promise.all([quoteP, profileP, metricP]);
-    if (!quote.pc || quote.pc === 0)
-      throw new Error(`找不到股票代碼「${sym}」。\n請確認代碼是否正確（例如 AAPL、TSLA、GOOGL）`);
-  } catch(err){
-    $('results').hidden = true;
+  /* Block index / commodity / forex — direct to indices page */
+  if (sym.startsWith('^') || sym.includes('=F') || sym.includes('=X')) {
     $('st-err').hidden  = false;
-    $('err-msg').textContent = err.message || '查詢失敗，請稍後再試';
-    btn.disabled    = false;
-    btn.textContent = tr('search');
+    $('results').hidden = true;
+    $('err-msg').textContent = currentLang === 'zh'
+      ? '指數、商品及匯率，請前往「環球指數」頁面查看。'
+      : 'For indices, commodities and FX rates, please visit the Global Indices page.';
     return;
   }
 
-  renderQuote(quote, profile, metric, sym);
-  syncWatchBtn();
-  updateTVChart();
-  btn.disabled    = false;
-  btn.textContent = tr('search');
-
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.sym === sym));
-
-  try {
-    const news = await newsP;
-    if (currentSym === sym){ newsData = news; renderNews(); }
-  } catch {
-    if (currentSym === sym) renderNews();
-  }
+  window.location.href = `detail.html?symbol=${encodeURIComponent(sym)}&type=stock&name=${encodeURIComponent(sym)}`;
 }
 
 /* ── Render: Quote ───────────────────────────────── */
