@@ -262,7 +262,7 @@ function buildIdxExtra(idx, data) {
     const pctVal = ytdReturn * 100;
     const sign   = pctVal >= 0 ? '+' : '';
     const cls    = pctVal >= 0 ? 'extra-up' : 'extra-dn';
-    ytdHtml = `<span class="${cls}">YTD: ${sign}${pctVal.toFixed(2)}%</span>`;
+    ytdHtml = `<span class="${cls}">${tr('card_ytd')}: ${sign}${pctVal.toFixed(2)}%</span>`;
   }
   const openHtml = open != null
     ? `<span>${currentLang === 'zh' ? '開盤' : 'Open'}: ${fmtIdxPrice(open, sym)}</span>`
