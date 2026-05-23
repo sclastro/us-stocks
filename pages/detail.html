@@ -298,7 +298,7 @@ async function loadFinnhub() {
     if (!quote.pc || quote.pc === 0) throw new Error('empty');
     renderQuote(quote, profile, metric);
     syncWatchBtn();
-    updateTVChart();
+    updateLWChart();
     try { newsData = await newsP; renderNews(); } catch { renderNews(); }
   } catch (finnhubErr) {
     if (symType === 'etf') {
@@ -308,7 +308,7 @@ async function loadFinnhub() {
         const data = await API.getIndexQuote(sym);
         renderIndexQuote(data);
         syncWatchBtn();
-        updateTVChart();
+        updateLWChart();
       } catch {
         showError(`查詢失敗，Finnhub 及 Yahoo Finance 均無法取得 ${sym} 的數據`);
       }
@@ -332,7 +332,7 @@ async function loadYahoo() {
   try {
     const data = await API.getIndexQuote(sym);
     renderIndexQuote(data);
-    updateTVChart();
+    updateLWChart();
   } catch (err) {
     showError(err.message || '查詢失敗，請稍後再試');
   }
@@ -535,7 +535,7 @@ function switchPeriod(period, btn) {
   activePeriod = period;
   document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  updateTVChart();
+  updateLWChart();
 }
 
 /* ── News (stock / etf only) ─────────────────────── */
