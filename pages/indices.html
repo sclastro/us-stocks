@@ -254,7 +254,7 @@ function buildIdxExtra(idx, data) {
   const sym = idx.symbol;
   const { price, fiftyTwoWeekLow: lo, fiftyTwoWeekHigh: hi, open, ytdReturn } = data;
   const hasRange  = lo != null && hi != null;
-  const rangeText = hasRange ? `52W: ${fmtIdxPrice(lo, sym)} — ${fmtIdxPrice(hi, sym)}` : null;
+  const rangeText = hasRange ? `${tr('card_52w_label')}: ${fmtIdxPrice(lo, sym)} — ${fmtIdxPrice(hi, sym)}` : null;
   const pct       = hasRange ? calcWeekPosition(price, lo, hi) : null;
 
   let ytdHtml = '';
