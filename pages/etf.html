@@ -399,11 +399,11 @@ function cardHTML(etf, data) {
 function buildEtfExtra(data) {
   const { price, fiftyTwoWeekLow: lo, fiftyTwoWeekHigh: hi, volume, totalAssets } = data;
   const hasRange  = lo != null && hi != null;
-  const rangeText = hasRange ? `52W: ${fmt$(lo)} — ${fmt$(hi)}` : null;
+  const rangeText = hasRange ? `${tr('card_52w_label')}: ${fmt$(lo)} — ${fmt$(hi)}` : null;
   const pct       = hasRange ? calcWeekPosition(price, lo, hi) : null;
-  const volText   = volume ? `Vol: ${formatVolume(volume)}` : null;
+  const volText   = volume ? `${tr('card_vol')}: ${formatVolume(volume)}` : null;
   const aumVal    = fmtAssets(totalAssets);
-  const aumText   = aumVal ? `AUM: ${aumVal}` : null;
+  const aumText   = aumVal ? `${tr('card_aum')}: ${aumVal}` : null;
   const metaParts = [volText, aumText].filter(Boolean);
   if (!rangeText && !metaParts.length) return '';
   return [
