@@ -274,7 +274,7 @@ function buildIdxExtra(idx, data) {
   return [
     rangeText    ? `<div class="card-extra-range">${rangeText}</div>` : '',
     hasRange     ? renderPositionBar(pct) : '',
-    metaParts.length ? `<div class="card-extra-meta">${metaParts.join('<span class="dim"> | </span>')}</div>` : '',
+    metaParts.length ? `<div class="card-extra-meta">${metaParts.join('<span style="color:var(--muted-2)"> | </span>')}</div>` : '',
   ].filter(Boolean).join('');
 }
 
