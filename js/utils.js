@@ -152,3 +152,11 @@ function renderPositionBar(pct) {
   const color = p < 30 ? '#ef4444' : p < 70 ? '#f97316' : '#22c55e';
   return `<div class="pos-bar-cell"><span class="pos-bar-pct">${p}%</span><div class="pos-bar-wrap"><div class="pos-bar-fill" style="width:${p}%;background:${color}"></div></div></div>`;
 }
+
+function fmtAssets(n) {
+  if (!n || isNaN(n)) return null;
+  if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return '$' + (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6)  return '$' + (n / 1e6).toFixed(0) + 'M';
+  return null;
+}
