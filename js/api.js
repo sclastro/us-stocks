@@ -21,7 +21,11 @@ async function _fhFetch(path) {
   }
 
   const res  = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    let errMsg = `HTTP ${res.status}`;
+    try { const b = await res.json(); if (b?.error) errMsg = b.error; } catch {}
+    throw new Error(errMsg);
+  }
   const data = await res.json();
   if (data.error) {
     const msg = data.error.toLowerCase();
