@@ -250,6 +250,34 @@ function buildMktBadge(state) {
 }
 
 /* ── Card HTML ───────────────────────────────────────── */
+function buildIdxExtra(idx, data) {
+  const sym = idx.symbol;
+  const { price, fiftyTwoWeekLow: lo, fiftyTwoWeekHigh: hi, open, ytdReturn } = data;
+  const hasRange  = lo != null && hi != null;
+  const rangeText = hasRange ? `52W: ${fmtIdxPrice(lo, sym)} — ${fmtIdxPrice(hi, sym)}` : null;
+  const pct       = hasRange ? calcWeekPosition(price, lo, hi) : null;
+
+  let ytdHtml = '';
+  if (ytdReturn != null) {
+    const pctVal = ytdReturn * 100;
+    const sign   = pctVal >= 0 ? '+' : '';
+    const cls    = pctVal >= 0 ? 'extra-up' : 'extra-dn';
+    ytdHtml = `<span class="${cls}">YTD: ${sign}${pctVal.toFixed(2)}%</span>`;
+  }
+  const openHtml = open != null
+    ? `<span>${currentLang === 'zh' ? '開盤' : 'Open'}: ${fmtIdxPrice(open, sym)}</span>`
+    : '';
+
+  const metaParts = [ytdHtml, openHtml].filter(Boolean);
+  if (!rangeText && !metaParts.length) return '';
+
+  return [
+    rangeText    ? `<div class="card-extra-range">${rangeText}</div>` : '',
+    hasRange     ? renderPositionBar(pct) : '',
+    metaParts.length ? `<div class="card-extra-meta">${metaParts.join('<span class="dim"> | </span>')}</div>` : '',
+  ].filter(Boolean).join('');
+}
+
 function cardHTML(idx, data) {
   const id         = symId(idx.symbol);
   const badge      = data ? buildMktBadge(data.marketState) : '';
@@ -272,6 +300,7 @@ function cardHTML(idx, data) {
     <div class="idx-card-price" id="ip-${id}">${priceInner}</div>
     <div id="ic-${id}">${chgInner}</div>
   </div>
+  <div class="idx-card-extra" id="ie-${id}">${data ? buildIdxExtra(idx, data) : ''}</div>
 </a>`;
 }
 
