@@ -41,6 +41,21 @@ const API = {
   getQuote:          sym      => _fhFetch(`quote?symbol=${sym}`),
   getCompanyProfile: sym      => _fhFetch(`stock/profile2?symbol=${sym}`),
   getMetrics:        sym      => _fhFetch(`stock/metric?symbol=${sym}&metric=all`),
+  getEpsEstimate:    sym      => _fhFetch(`stock/eps-estimate?symbol=${sym}&freq=annual`),
+
+  async getFmpForwardEps(sym) {
+    if (!_useProxy) return null;
+    const res = await fetch(`/.netlify/functions/fmp?symbol=${encodeURIComponent(sym)}`);
+    if (!res.ok) return null;
+    return res.json();
+  },
+
+  async getAvOverview(sym) {
+    if (!_useProxy) return null;
+    const res = await fetch(`/.netlify/functions/alphavantage?symbol=${encodeURIComponent(sym)}`);
+    if (!res.ok) return null;
+    return res.json();
+  },
   getCandles: (sym, from, to, resolution = 'D') =>
     _fhFetch(`stock/candle?symbol=${sym}&resolution=${resolution}&from=${from}&to=${to}`),
 

@@ -16,7 +16,7 @@
   <div class="nav-inner">
     <a class="logo" href="quote.html">
       <div class="logo-mark" aria-hidden="true"></div>
-      <span><b>Stock</b><span class="dim">Lens</span></span>
+      <span data-i18n="logo_name"><b>Stock</b><span class="dim">Lens</span></span>
     </a>
     <div class="nav-tabs">
       <a href="quote.html"     class="nav-tab"        data-i18n="nav_quote">股票查詢</a>
@@ -33,7 +33,13 @@
         <button type="button" data-lang="zh">繁中</button>
         <button type="button" data-lang="en">EN</button>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙</button>
       <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Yahoo Finance</b></span>
+      <a href="login.html" class="nav-login-btn" id="navLoginBtn" data-i18n="nav_login">登入</a>
+      <div class="nav-user-wrap" id="navUserWrap" hidden>
+        <span class="nav-user-name" id="navUserName"></span>
+        <button class="nav-logout-btn" id="navLogoutBtn" type="button" data-i18n="nav_logout">登出</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -67,7 +73,7 @@
 <nav class="bottom-nav">
   <a href="quote.html"     class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>查詢</span>
+    <span data-i18n="bn_quote">查詢</span>
   </a>
   <a href="etf.html"       class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -75,20 +81,24 @@
   </a>
   <a href="indices.html"   class="bn-item active">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
-    <span>指數</span>
+    <span data-i18n="bn_indices">指數</span>
   </a>
   <a href="watchlist.html" class="bn-item">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span>自選</span>
+    <span data-i18n="bn_watchlist">自選</span>
   </a>
   <a href="portfolio.html" class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-    <span>持倉</span>
+    <span data-i18n="bn_portfolio">持倉</span>
   </a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/data.js"></script>
 <script src="../js/api.js"></script>
 <script>
 'use strict';
@@ -136,7 +146,7 @@ const CATS = [
       { symbol: '^SSMI',       name: '瑞士SMI指數',        desc: '瑞士20隻最大上市企業，雀巢羅氏諾華為主' },
       { symbol: '^AEX',        name: '荷蘭AEX指數',        desc: '阿姆斯特丹25隻主要上市企業' },
       { symbol: '^IBEX',       name: '西班牙IBEX 35指數',  desc: '西班牙35隻主要上市企業' },
-      { symbol: '^FTSEMIB.MI', name: '意大利富時MIB指數',  desc: '意大利40隻最大上市企業' },
+      { symbol: 'FTSEMIB.MI',  name: '意大利富時MIB指數',  desc: '意大利40隻最大上市企業' },
     ]
   },
   {
@@ -185,6 +195,62 @@ const CATS = [
   },
 ];
 
+/* ── English name/desc lookup ────────────────────────── */
+const IDX_EN = {
+  '^DJI':       { name:'Dow Jones Industrial Average',            desc:'30 US blue-chip stocks, the oldest major stock market index' },
+  '^GSPC':      { name:'S&P 500 Index',                           desc:'500 large US companies, the most representative market index' },
+  '^IXIC':      { name:'Nasdaq Composite Index',                  desc:'Broad index dominated by technology stocks' },
+  '^RUT':       { name:'Russell 2000 Index',                      desc:'2,000 US small-cap stocks reflecting mid-small company performance' },
+  '^VIX':       { name:'CBOE Volatility Index (VIX)',             desc:'Measures market volatility expectations; higher readings indicate fear' },
+  '^N225':      { name:'Nikkei 225',                              desc:'225 major Japanese listed companies' },
+  '^HSI':       { name:'Hang Seng Index',                         desc:'Hong Kong\'s most important index, primarily blue-chip stocks' },
+  '^HSCE':      { name:'Hang Seng China Enterprises Index (H-Share)', desc:'Chinese state-owned enterprises listed in Hong Kong' },
+  '000001.SS':  { name:'Shanghai Composite Index',               desc:'All A-shares and B-shares on the Shanghai Stock Exchange' },
+  '399001.SZ':  { name:'Shenzhen Component Index',               desc:'Major stocks on the Shenzhen Stock Exchange' },
+  '^KS11':      { name:'KOSPI Index',                             desc:'South Korea\'s main stock market index' },
+  '^BSESN':     { name:'S&P BSE SENSEX',                          desc:'30 major blue-chip stocks in India' },
+  '^TWII':      { name:'Taiwan Weighted Stock Index',             desc:'Taiwan\'s main index, dominated by electronics and tech stocks' },
+  '^JKSE':      { name:'Jakarta Composite Index',                 desc:'Indonesia\'s main stock market index' },
+  '^VNINDEX':   { name:'Vietnam VN-Index',                        desc:'Main index of the Ho Chi Minh Stock Exchange' },
+  '^SET.BK':    { name:'Thailand SET Index',                      desc:'Stock Exchange of Thailand Composite Index' },
+  '^KLSE':      { name:'FTSE Bursa Malaysia KLCI',                desc:'Malaysia\'s 30 blue-chip stocks' },
+  '^STI':       { name:'Straits Times Index',                     desc:'30 major companies listed in Singapore' },
+  '^FTSE':      { name:'FTSE 100',                                desc:'100 largest companies listed on the London Stock Exchange' },
+  '^GDAXI':     { name:'DAX Index',                               desc:'40 major German listed companies' },
+  '^FCHI':      { name:'CAC 40 Index',                            desc:'40 major French listed companies' },
+  '^STOXX50E':  { name:'EURO STOXX 50 Index',                     desc:'50 blue-chip stocks in the Eurozone' },
+  '^SSMI':      { name:'Swiss Market Index (SMI)',                 desc:'20 largest Swiss companies, led by Nestlé, Roche, Novartis' },
+  '^AEX':       { name:'AEX Index',                               desc:'25 major companies listed in Amsterdam' },
+  '^IBEX':      { name:'IBEX 35 Index',                           desc:'35 major Spanish listed companies' },
+  'FTSEMIB.MI': { name:'FTSE MIB Index',                          desc:'40 largest Italian listed companies' },
+  '^AXJO':      { name:'S&P/ASX 200 Index',                       desc:'200 major Australian listed companies' },
+  '^BVSP':      { name:'Bovespa Index (B3)',                       desc:'Brazil\'s main stock market index' },
+  '^TASI.SR':   { name:'Tadawul All Share Index (TASI)',           desc:'Main index of the Saudi Arabian stock exchange' },
+  '^J203.JO':   { name:'JSE All Share Index',                     desc:'Main index of the Johannesburg Stock Exchange, South Africa' },
+  '^MXX':       { name:'IPC Mexico Index',                        desc:'35 major Mexican listed companies' },
+  '^MERV':      { name:'MERVAL Index',                            desc:'Main index of the Buenos Aires Stock Exchange, Argentina' },
+  'GC=F':       { name:'Gold Futures',                            desc:'NYMEX gold futures price (USD/troy oz)' },
+  'SI=F':       { name:'Silver Futures',                          desc:'NYMEX silver futures price (USD/troy oz)' },
+  'CL=F':       { name:'WTI Crude Oil Futures',                   desc:'West Texas Intermediate crude oil, US benchmark price' },
+  'BZ=F':       { name:'Brent Crude Oil Futures',                 desc:'Brent crude oil, international benchmark price' },
+  'NG=F':       { name:'Natural Gas Futures',                     desc:'NYMEX natural gas futures price (USD/MMBtu)' },
+  'HG=F':       { name:'Copper Futures',                          desc:'NYMEX copper futures price (USD/lb), reflects global industrial demand' },
+  'ZC=F':       { name:'Corn Futures',                            desc:'CBOT corn futures price (US cents/bushel)' },
+  'ZS=F':       { name:'Soybean Futures',                         desc:'CBOT soybean futures price (US cents/bushel)' },
+  'PL=F':       { name:'Platinum Futures',                        desc:'NYMEX platinum futures price (USD/troy oz)' },
+  'URA':        { name:'Global X Uranium ETF',                    desc:'Tracks global uranium mining companies, indirect uranium price exposure' },
+  'EURUSD=X':   { name:'Euro / US Dollar',                        desc:'The world\'s most traded currency pair' },
+  'GBPUSD=X':   { name:'British Pound / US Dollar',               desc:'A major currency pair, still significant post-Brexit' },
+  'JPY=X':      { name:'US Dollar / Japanese Yen',                desc:'Asia\'s most important currency pair' },
+  'HKDUSD=X':   { name:'Hong Kong Dollar / US Dollar',            desc:'HKD is pegged to USD, minimal volatility' },
+  'CNY=X':      { name:'US Dollar / Chinese Yuan (Offshore)',     desc:'China\'s official exchange rate reference' },
+  'AUDUSD=X':   { name:'Australian Dollar / US Dollar',           desc:'Commodity export-oriented currency, correlated with commodity prices' },
+  'CADUSD=X':   { name:'Canadian Dollar / US Dollar',             desc:'Canadian dollar, highly correlated with oil prices' },
+  'CHFUSD=X':   { name:'Swiss Franc / US Dollar',                 desc:'Global safe-haven currency, appreciates during market turmoil' },
+  'CNYUSD=X':   { name:'Chinese Yuan / US Dollar (Onshore)',      desc:'China\'s official onshore renminbi exchange rate' },
+  'TWDUSD=X':   { name:'New Taiwan Dollar / US Dollar',           desc:'Taiwan New Dollar to US Dollar exchange rate' },
+};
+
 /* ── State ───────────────────────────────────────────── */
 let activeTab    = 'us';
 let loadGen      = 0;
@@ -228,7 +294,7 @@ function buildChgHtml(price, change, changePct, sym) {
   /* VIX: no up/dn colour, show volatility label instead */
   if (sym === '^VIX') {
     const hi = price > 20;
-    return `<span class="idx-card-chg ${hi ? 'vix-hi' : 'vix-lo'}">${hi ? '高波動' : '低波動'}</span>`;
+    return `<span class="idx-card-chg ${hi ? 'vix-hi' : 'vix-lo'}">${tr(hi ? 'vix_hi' : 'vix_lo')}</span>`;
   }
   const up  = change >= 0;
   const cls = up ? 'up' : 'dn';
@@ -279,6 +345,9 @@ function buildIdxExtra(idx, data) {
 }
 
 function cardHTML(idx, data) {
+  const en   = IDX_EN[idx.symbol];
+  const name = currentLang === 'en' ? (en?.name || idx.name) : idx.name;
+  const desc = currentLang === 'en' ? (en?.desc || idx.desc) : idx.desc;
   const id         = symId(idx.symbol);
   const badge      = data ? buildMktBadge(data.marketState) : '';
   const priceInner = data
@@ -289,13 +358,13 @@ function cardHTML(idx, data) {
     : `<span class="sk" style="width:80px;height:20px;border-radius:5px"></span>`;
 
   return `
-<a href="detail.html?symbol=${encodeURIComponent(idx.symbol)}&type=${symType(idx.symbol)}&name=${encodeURIComponent(idx.name)}" class="idx-card">
+<a href="detail.html?symbol=${encodeURIComponent(idx.symbol)}&type=${symType(idx.symbol)}&name=${encodeURIComponent(name)}" class="idx-card">
   <div class="idx-card-head" id="ih-${id}">
-    <div class="idx-card-name">${idx.name}</div>
+    <div class="idx-card-name">${name}</div>
     ${badge}
   </div>
   <div class="idx-card-sym">${idx.symbol}</div>
-  <div class="idx-card-desc">${idx.desc}</div>
+  <div class="idx-card-desc">${desc}</div>
   <div class="idx-card-bottom">
     <div class="idx-card-price" id="ip-${id}">${priceInner}</div>
     <div id="ic-${id}">${chgInner}</div>
@@ -408,16 +477,21 @@ function updateCard(idx, data) {
 function setStatus(text) { $('idxLoadStatus').textContent = text; }
 
 /* ── Boot ────────────────────────────────────────────── */
-applyLang();
-updateWlBadge();
-renderAll();
+applyLang(); applyTheme();
+(async () => {
+  await initAuth();
+  await wlInit();
+  renderAll();
+})();
 
 document.querySelectorAll('.lang-toggle button').forEach(b => {
   b.addEventListener('click', () => {
     setLang(b.dataset.lang);
+    applyTheme();
     renderAll();
   });
 });
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 </script>
 </body>
 </html>

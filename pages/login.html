@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockLens — 登入</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- NAV (minimal — no auth buttons, no watchlist badge) -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="quote.html">
+      <div class="logo-mark" aria-hidden="true"></div>
+      <span data-i18n="logo_name"><b>Stock</b><span class="dim">Lens</span></span>
+    </a>
+    <div class="nav-right">
+      <div class="lang-toggle" id="langToggle">
+        <button type="button" data-lang="zh">繁中</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1 id="loginTitle">歡迎使用 StockLens</h1>
+      <p class="login-sub" id="loginSub">登入以同步自選清單和持倉記錄</p>
+
+      <!-- Tabs -->
+      <div class="login-tabs">
+        <button class="login-tab active" id="tabSignIn" type="button">登入</button>
+        <button class="login-tab"        id="tabSignUp" type="button">建立帳號</button>
+      </div>
+
+      <!-- Sign In form -->
+      <form id="signInForm" novalidate>
+        <div class="auth-field">
+          <label>電郵</label>
+          <input class="auth-input" id="siEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>密碼</label>
+          <input class="auth-input" id="siPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="auth-submit" id="siBtn" type="submit">登入</button>
+        <div class="auth-err" id="siErr"></div>
+      </form>
+
+      <!-- Sign Up form (hidden by default) -->
+      <form id="signUpForm" hidden novalidate>
+        <div class="auth-field">
+          <label>電郵</label>
+          <input class="auth-input" id="suEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>密碼（最少 6 位）</label>
+          <input class="auth-input" id="suPassword" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <button class="auth-submit" id="suBtn" type="submit">建立帳號</button>
+        <div class="auth-err" id="suErr"></div>
+        <div class="auth-ok" id="suOk" hidden></div>
+      </form>
+
+      <!-- Guest link -->
+      <div class="auth-guest-link">
+        <a href="watchlist.html">繼續以訪客身份使用 →</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div data-i18n="footer_left">StockLens · 僅供研究及教育用途，不構成投資建議。</div>
+  <div><span data-i18n="footer_delay">報價延遲約 15 分鐘</span> · <a href="#" data-i18n="footer_terms">服務條款</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+'use strict';
+
+applyLang();
+
+document.querySelectorAll('.lang-toggle button').forEach(b => {
+  b.addEventListener('click', () => setLang(b.dataset.lang));
+});
+
+/* ── Tab switching ───────────────────────────────── */
+const tabSignIn = document.getElementById('tabSignIn');
+const tabSignUp = document.getElementById('tabSignUp');
+const signInForm = document.getElementById('signInForm');
+const signUpForm = document.getElementById('signUpForm');
+
+tabSignIn.addEventListener('click', () => {
+  tabSignIn.classList.add('active');
+  tabSignUp.classList.remove('active');
+  signInForm.hidden = false;
+  signUpForm.hidden = true;
+});
+
+tabSignUp.addEventListener('click', () => {
+  tabSignUp.classList.add('active');
+  tabSignIn.classList.remove('active');
+  signUpForm.hidden = false;
+  signInForm.hidden = true;
+});
+
+/* ── Redirect target (default: watchlist) ────────── */
+const returnTo = new URLSearchParams(window.location.search).get('returnTo') || 'watchlist.html';
+
+/* ── If already logged in → redirect ────────────── */
+(async () => {
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session?.user) window.location.href = returnTo;
+})();
+
+/* ── Sign In ─────────────────────────────────────── */
+document.getElementById('signInForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email    = document.getElementById('siEmail').value.trim();
+  const password = document.getElementById('siPassword').value;
+  const errEl    = document.getElementById('siErr');
+  const btn      = document.getElementById('siBtn');
+
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = '請填寫電郵和密碼'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '登入中…';
+  try {
+    await authSignIn(email, password);
+    window.location.href = returnTo;
+  } catch(err) {
+    errEl.textContent = _authErrMsg(err);
+    btn.disabled = false;
+    btn.textContent = '登入';
+  }
+});
+
+/* ── Sign Up ─────────────────────────────────────── */
+document.getElementById('signUpForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email    = document.getElementById('suEmail').value.trim();
+  const password = document.getElementById('suPassword').value;
+  const errEl    = document.getElementById('suErr');
+  const okEl     = document.getElementById('suOk');
+  const btn      = document.getElementById('suBtn');
+
+  errEl.textContent = '';
+  okEl.hidden = true;
+  if (!email || !password) { errEl.textContent = '請填寫電郵和密碼'; return; }
+  if (password.length < 6) { errEl.textContent = '密碼最少 6 位'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '建立中…';
+  try {
+    const result = await authSignUp(email, password);
+    /* If email confirmation is disabled in Supabase, session is set immediately */
+    if (result?.session) {
+      window.location.href = returnTo;
+    } else {
+      /* Email confirmation required */
+      okEl.textContent = '✅ 請查看電郵以確認帳號，然後回來登入。';
+      okEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = '建立帳號';
+    }
+  } catch(err) {
+    errEl.textContent = _authErrMsg(err);
+    btn.disabled = false;
+    btn.textContent = '建立帳號';
+  }
+});
+
+/* ── Error message helper ────────────────────────── */
+function _authErrMsg(err) {
+  const msg = err?.message || '';
+  if (msg.includes('Invalid login credentials'))  return '電郵或密碼不正確';
+  if (msg.includes('Email not confirmed'))         return '請先確認電郵';
+  if (msg.includes('User already registered'))     return '此電郵已有帳號，請直接登入';
+  if (msg.includes('Password should be'))          return '密碼最少 6 位';
+  if (msg.includes('rate limit'))                  return '請求太頻繁，請稍後再試';
+  return msg || '發生錯誤，請重試';
+}
+</script>
+</body>
+</html>

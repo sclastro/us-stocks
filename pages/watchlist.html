@@ -16,7 +16,7 @@
   <div class="nav-inner">
     <a class="logo" href="quote.html">
       <div class="logo-mark" aria-hidden="true"></div>
-      <span><b>Stock</b><span class="dim">Lens</span></span>
+      <span data-i18n="logo_name"><b>Stock</b><span class="dim">Lens</span></span>
     </a>
     <div class="nav-tabs">
       <a href="quote.html"     class="nav-tab"        data-i18n="nav_quote">股票查詢</a>
@@ -33,7 +33,13 @@
         <button type="button" data-lang="zh">繁中</button>
         <button type="button" data-lang="en">EN</button>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙</button>
       <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+      <a href="login.html" class="nav-login-btn" id="navLoginBtn" data-i18n="nav_login">登入</a>
+      <div class="nav-user-wrap" id="navUserWrap" hidden>
+        <span class="nav-user-name" id="navUserName"></span>
+        <button class="nav-logout-btn" id="navLogoutBtn" type="button" data-i18n="nav_logout">登出</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -48,7 +54,17 @@
     <div class="wl-actions">
       <span class="wl-status" id="wlStatus"></span>
       <button class="wl-clear-all" id="clearAllBtn" data-i18n="wl_clear" hidden>清除全部</button>
+      <div class="pf-confirm-wrap" id="clearAllConfirm" hidden>
+        <button class="pf-c-yes" id="clearAllYes" type="button" title="確認清除全部">✓</button>
+        <button class="pf-c-no" id="clearAllNo" type="button" title="取消">✗</button>
+      </div>
     </div>
+  </div>
+
+  <!-- Sync note (guest / logged-in) -->
+  <div class="pf-guest-note" id="wlSyncNote">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span>Guest 模式 · 資料儲存於本機</span>
   </div>
 
   <!-- Empty state -->
@@ -67,10 +83,11 @@
       <span data-i18n="nav_quote">股票</span>
       <span class="col-r" data-i18n="wl_price">最新價</span>
       <span class="col-r col-chg" data-i18n="wl_change">升跌</span>
-      <span class="col-r col-52range">52W 範圍</span>
-      <span class="col-r col-52pos">52W 位置</span>
+      <span class="col-r col-52range" data-i18n="wl_52w_range">52W 範圍</span>
+      <span class="col-r col-52pos" data-i18n="wl_52w_pos">52W 位置</span>
       <span class="col-r col-vol" data-i18n="k_vol">成交量</span>
       <span class="col-r col-pe">P/E</span>
+      <span class="col-r col-fwdpe" data-i18n="k_fwd_pe">預期市盈率</span>
       <span></span>
     </div>
     <div id="wlRows"></div>
@@ -86,7 +103,7 @@
 <nav class="bottom-nav">
   <a href="quote.html"     class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>查詢</span>
+    <span data-i18n="bn_quote">查詢</span>
   </a>
   <a href="etf.html"       class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -94,20 +111,24 @@
   </a>
   <a href="indices.html"   class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
-    <span>指數</span>
+    <span data-i18n="bn_indices">指數</span>
   </a>
   <a href="watchlist.html" class="bn-item active">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span>自選</span>
+    <span data-i18n="bn_watchlist">自選</span>
   </a>
   <a href="portfolio.html" class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-    <span>持倉</span>
+    <span data-i18n="bn_portfolio">持倉</span>
   </a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/data.js"></script>
 <script src="../js/api.js"></script>
 <script>
 'use strict';
@@ -118,26 +139,51 @@ const $ = id => document.getElementById(id);
 const priceCache = {};
 
 /* ── Boot ────────────────────────────────────────── */
-applyLang();
-updateWlBadge();
-renderPage();
+applyLang(); applyTheme();
+(async () => {
+  await initAuth();
+  await wlInit();
+  _updateWlNote();
+  renderPage();
+})();
 
 document.querySelectorAll('.lang-toggle button').forEach(b => {
-  b.addEventListener('click', () => { setLang(b.dataset.lang); renderPage(); });
+  b.addEventListener('click', () => { setLang(b.dataset.lang); applyTheme(); _updateWlNote(); renderPage(); });
 });
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+/* ── Auth state note ─────────────────────────────── */
+function _updateWlNote() {
+  const note = document.getElementById('wlSyncNote');
+  if (!note) return;
+  if (isLoggedIn()) {
+    note.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>${currentLang === 'zh' ? '已登入 · 資料同步至雲端' : 'Signed in · Data synced to cloud'}</span>`;
+  } else {
+    note.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>${currentLang === 'zh' ? 'Guest 模式 · 資料儲存於本機' : 'Guest mode · Data stored locally'}</span>`;
+  }
+}
 
 $('clearAllBtn').addEventListener('click', () => {
-  if (!confirm(tr('wl_clear') + '？')) return;
-  watchlist.clear();
-  saveWatchlist();
-  updateWlBadge();
+  $('clearAllBtn').hidden = true;
+  $('clearAllConfirm').hidden = false;
+});
+$('clearAllYes').addEventListener('click', async () => {
+  await wlClear();
+  $('clearAllConfirm').hidden = true;
   renderPage();
+});
+$('clearAllNo').addEventListener('click', () => {
+  $('clearAllBtn').hidden = false;
+  $('clearAllConfirm').hidden = true;
 });
 
 /* ── Render page ─────────────────────────────────── */
 function renderPage(){
   const syms = [...watchlist];
   $('clearAllBtn').hidden = syms.length === 0;
+  $('clearAllConfirm').hidden = true;
 
   if (syms.length === 0) {
     $('wlEmpty').hidden = false;
@@ -158,15 +204,40 @@ function renderRows(syms){
     return rowHTML(sym, cached);
   }).join('');
 
+  /* × → show inline confirm */
   $('wlRows').querySelectorAll('.wl-remove').forEach(btn => {
     btn.addEventListener('click', e => {
       e.preventDefault();
       e.stopPropagation();
-      const sym = btn.dataset.sym;
-      watchlist.delete(sym);
-      saveWatchlist();
-      updateWlBadge();
+      const sym    = btn.dataset.sym;
+      const remCol = document.getElementById(`wlrem-${sym}`);
+      const row    = $('wlRows').querySelector(`.wl-row[data-sym="${sym}"]`);
+      btn.hidden = true;
+      remCol.querySelector('.pf-confirm-wrap').hidden = false;
+      if (row) row.classList.add('wl-row--confirming');
+    });
+  });
+
+  /* ✓ → confirm delete */
+  $('wlRows').querySelectorAll('.wl-c-yes').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.preventDefault();
+      e.stopPropagation();
+      await wlRemove(btn.dataset.sym);
       renderPage();
+    });
+  });
+
+  /* ✗ → cancel */
+  $('wlRows').querySelectorAll('.wl-c-no').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const remCol = btn.closest('.wl-remove-col');
+      const row    = btn.closest('.wl-row');
+      remCol.querySelector('.wl-remove').hidden = false;
+      remCol.querySelector('.pf-confirm-wrap').hidden = true;
+      if (row) row.classList.remove('wl-row--confirming');
     });
   });
 }
@@ -187,6 +258,7 @@ function rowHTML(sym, data){
   const posBar    = renderPositionBar(wkPct);
   const volStr    = data ? formatVolume(data.volume) : '—';
   const peStr     = data?.trailingPE ? data.trailingPE.toFixed(1) : '—';
+  const fwdPEStr  = (data?.forwardPE && data.forwardPE > 0) ? data.forwardPE.toFixed(1) : '—';
 
   return `
 <a href="detail.html?symbol=${encodeURIComponent(sym)}&type=stock&name=${encodeURIComponent(sym)}" class="wl-row" data-sym="${sym}">
@@ -205,10 +277,15 @@ function rowHTML(sym, data){
   <div class="wl-52pos-col" id="wl52p-${sym}">${posBar}</div>
   <div class="wl-vol-col" id="wlvol-${sym}">${volStr}</div>
   <div class="wl-pe-col" id="wlpe-${sym}">${peStr}</div>
-  <div class="wl-remove-col">
+  <div class="wl-fwdpe-col" id="wlfwdpe-${sym}">${fwdPEStr}</div>
+  <div class="wl-remove-col" id="wlrem-${sym}">
     <button class="wl-remove" data-sym="${sym}" title="移除" type="button">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
+    <div class="pf-confirm-wrap" hidden>
+      <button class="pf-c-yes wl-c-yes" data-sym="${sym}" type="button" title="確認移除">✓</button>
+      <button class="pf-c-no wl-c-no" type="button" title="取消">✗</button>
+    </div>
   </div>
 </a>`;
 }
@@ -230,6 +307,42 @@ async function fetchAllPrices(syms){
   }
 
   $('wlStatus').textContent = tr('wl_updated');
+
+  /* Fetch P/E from Finnhub metrics (more reliable than Yahoo for this field) */
+  fetchPEFromFinnhub(syms);
+}
+
+/* ── Fetch P/E + Fwd P/E from Finnhub (background, non-blocking) */
+async function fetchPEFromFinnhub(syms){
+  for (const sym of syms) {
+    /* Trailing P/E from stock/metric */
+    try {
+      const m  = await API.getMetrics(sym);
+      const pe = m?.metric?.peExclExtraTTM ?? m?.metric?.peInclExtraTTM ?? null;
+      if (pe !== null && pe > 0) {
+        if (priceCache[sym]) priceCache[sym].trailingPE = pe;
+        const peEl = document.getElementById(`wlpe-${sym}`);
+        if (peEl) peEl.textContent = pe.toFixed(1);
+      }
+    } catch { /* skip */ }
+
+    /* Forward P/E: Alpha Vantage OVERVIEW (cached 24 h) */
+    try {
+      let fwdPE = getAvFwdPE(sym); // undefined = not cached
+      if (fwdPE === undefined) {
+        const ov = await API.getAvOverview(sym);
+        fwdPE = ov?.forwardPE ?? null;
+        setAvFwdPE(sym, fwdPE);
+      }
+      if (fwdPE !== null && fwdPE > 0) {
+        if (priceCache[sym]) priceCache[sym].forwardPE = fwdPE;
+        const fwdPEEl = document.getElementById(`wlfwdpe-${sym}`);
+        if (fwdPEEl) fwdPEEl.textContent = fwdPE.toFixed(1);
+      }
+    } catch { /* skip */ }
+
+    await new Promise(r => setTimeout(r, 300));
+  }
 }
 
 function updateRowPrice(sym, data){
@@ -240,6 +353,7 @@ function updateRowPrice(sym, data){
   const pos52El   = document.getElementById(`wl52p-${sym}`);
   const volEl     = document.getElementById(`wlvol-${sym}`);
   const peEl      = document.getElementById(`wlpe-${sym}`);
+  const fwdPEEl   = document.getElementById(`wlfwdpe-${sym}`);
   if (!priceEl) return;
 
   priceEl.textContent = fmt$(data.price);
@@ -261,8 +375,9 @@ function updateRowPrice(sym, data){
     pos52El.innerHTML = renderPositionBar(p);
   }
 
-  if (volEl) volEl.textContent = formatVolume(data.volume);
-  if (peEl)  peEl.textContent  = data.trailingPE ? data.trailingPE.toFixed(1) : '—';
+  if (volEl)    volEl.textContent   = formatVolume(data.volume);
+  if (peEl)     peEl.textContent    = data.trailingPE ? data.trailingPE.toFixed(1) : '—';
+  if (fwdPEEl)  fwdPEEl.textContent = (data.forwardPE && data.forwardPE > 0) ? data.forwardPE.toFixed(1) : '—';
 }
 </script>
 </body>

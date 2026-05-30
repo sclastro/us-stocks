@@ -16,7 +16,7 @@
   <div class="nav-inner">
     <a class="logo" href="quote.html">
       <div class="logo-mark" aria-hidden="true"></div>
-      <span><b>Stock</b><span class="dim">Lens</span></span>
+      <span data-i18n="logo_name"><b>Stock</b><span class="dim">Lens</span></span>
     </a>
     <div class="nav-tabs">
       <a href="quote.html"     class="nav-tab"        data-i18n="nav_quote">股票查詢</a>
@@ -33,7 +33,13 @@
         <button type="button" data-lang="zh">繁中</button>
         <button type="button" data-lang="en">EN</button>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙</button>
       <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+      <a href="login.html" class="nav-login-btn" id="navLoginBtn" data-i18n="nav_login">登入</a>
+      <div class="nav-user-wrap" id="navUserWrap" hidden>
+        <span class="nav-user-name" id="navUserName"></span>
+        <button class="nav-logout-btn" id="navLogoutBtn" type="button" data-i18n="nav_logout">登出</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -70,7 +76,7 @@
 <nav class="bottom-nav">
   <a href="quote.html"     class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>查詢</span>
+    <span data-i18n="bn_quote">查詢</span>
   </a>
   <a href="etf.html"       class="bn-item active">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -78,20 +84,24 @@
   </a>
   <a href="indices.html"   class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
-    <span>指數</span>
+    <span data-i18n="bn_indices">指數</span>
   </a>
   <a href="watchlist.html" class="bn-item">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span>自選</span>
+    <span data-i18n="bn_watchlist">自選</span>
   </a>
   <a href="portfolio.html" class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-    <span>持倉</span>
+    <span data-i18n="bn_portfolio">持倉</span>
   </a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/data.js"></script>
 <script src="../js/api.js"></script>
 <script>
 'use strict';
@@ -309,6 +319,89 @@ const GROUPS = [
   }
 ];
 
+/* ── English name/desc lookup ────────────────────── */
+const ETF_EN = {
+  SPY:  { name:'SPDR S&P 500 ETF Trust',                      desc:'Tracks 500 large US companies, world\'s largest ETF' },
+  QQQ:  { name:'Invesco QQQ Trust (Nasdaq 100)',               desc:'Tracks Nasdaq 100, heavily weighted toward tech stocks' },
+  DIA:  { name:'SPDR Dow Jones Industrial Average ETF',       desc:'Tracks 30 blue-chip Dow stocks' },
+  IWM:  { name:'iShares Russell 2000 ETF',                    desc:'2,000 US small-cap stocks reflecting mid-small company performance' },
+  VTI:  { name:'Vanguard Total Stock Market ETF',             desc:'Covers entire US market with 3,500+ stocks' },
+  VOO:  { name:'Vanguard S&P 500 ETF',                        desc:'Low-cost S&P 500 index tracking' },
+  IVV:  { name:'iShares Core S&P 500 ETF',                    desc:'Ultra-low expense ratio S&P 500 index fund' },
+  SCHB: { name:'Schwab US Broad Market ETF',                  desc:'Covers US large, mid & small-cap stocks at minimal cost' },
+  XLK:  { name:'Technology Select Sector SPDR ETF',           desc:'Tracks S&P 500 tech sector including Apple & Microsoft' },
+  SOXX: { name:'iShares Semiconductor ETF',                   desc:'Tracks leading semiconductor industry companies' },
+  ARKK: { name:'ARK Innovation ETF',                          desc:'Actively managed, focused on disruptive innovation technology' },
+  IGV:  { name:'iShares Expanded Tech-Software Sector ETF',   desc:'Tracks global software and internet services companies' },
+  SMH:  { name:'VanEck Semiconductor ETF',                    desc:'Tracks the 25 largest semiconductor companies' },
+  CIBR: { name:'First Trust Nasdaq Cybersecurity ETF',        desc:'Focuses on global cybersecurity industry companies' },
+  ROBO: { name:'ROBO Global Robotics & Automation ETF',       desc:'Tracks robotics, automation and AI-related companies' },
+  XLV:  { name:'Health Care Select Sector SPDR ETF',          desc:'Covers pharma, biotech and medical device leaders' },
+  IBB:  { name:'iShares Biotechnology ETF',                   desc:'Tracks the Nasdaq Biotechnology Index' },
+  XBI:  { name:'SPDR S&P Biotech ETF',                        desc:'Equal-weight biotech small/mid-cap allocation' },
+  IHI:  { name:'iShares U.S. Medical Devices ETF',            desc:'Tracks US medical equipment and device companies' },
+  ARKG: { name:'ARK Genomic Revolution ETF',                  desc:'Focuses on genomics and precision medicine innovation' },
+  XLF:  { name:'Financial Select Sector SPDR ETF',            desc:'Covers banks, insurance and asset management leaders' },
+  KRE:  { name:'SPDR S&P Regional Banking ETF',               desc:'Tracks US mid-small regional banks' },
+  IAI:  { name:'iShares U.S. Broker-Dealers & Exchanges ETF', desc:'Focuses on brokers, exchanges and financial trading firms' },
+  XLE:  { name:'Energy Select Sector SPDR ETF',               desc:'Covers major oil and natural gas companies' },
+  XOP:  { name:'SPDR S&P Oil & Gas Exploration & Production ETF', desc:'Tracks oil & gas exploration and production companies' },
+  ICLN: { name:'iShares Global Clean Energy ETF',             desc:'Tracks global clean and renewable energy companies' },
+  TAN:  { name:'Invesco Solar ETF',                           desc:'Focuses on global solar industry supply chain companies' },
+  XLY:  { name:'Consumer Discretionary Select Sector SPDR ETF', desc:'Covers consumer leaders like Amazon and Tesla' },
+  XLP:  { name:'Consumer Staples Select Sector SPDR ETF',     desc:'Tracks food, beverage and household product leaders' },
+  ONLN: { name:'ProShares Online Retail ETF',                 desc:'Focuses on global e-commerce and online retailers' },
+  XLI:  { name:'Industrial Select Sector SPDR ETF',           desc:'Covers aerospace, defense and machinery leaders' },
+  ITA:  { name:'iShares U.S. Aerospace & Defense ETF',        desc:'Tracks US aerospace and defense industry companies' },
+  TLT:  { name:'iShares 20+ Year Treasury Bond ETF',          desc:'Tracks long-term US Treasuries, highly rate-sensitive' },
+  IEF:  { name:'iShares 7-10 Year Treasury Bond ETF',         desc:'Tracks medium-term US Treasury bonds' },
+  SHY:  { name:'iShares 1-3 Year Treasury Bond ETF',          desc:'Tracks short-term US Treasuries, lowest volatility' },
+  BND:  { name:'Vanguard Total Bond Market ETF',              desc:'Covers the entire US bond market' },
+  AGG:  { name:'iShares Core U.S. Aggregate Bond ETF',        desc:'iShares flagship bond ETF, broadly diversified' },
+  HYG:  { name:'iShares iBoxx $ High Yield Corporate Bond ETF', desc:'Tracks the US high-yield (junk) bond market' },
+  LQD:  { name:'iShares iBoxx $ Investment Grade Corp Bond ETF', desc:'Tracks US investment-grade corporate bonds' },
+  TIP:  { name:'iShares TIPS Bond ETF',                       desc:'Tracks US TIPS, hedges against inflation risk' },
+  GLD:  { name:'SPDR Gold Shares ETF',                        desc:'World\'s largest gold ETF, holds physical gold directly' },
+  IAU:  { name:'iShares Gold Trust ETF',                      desc:'Physical gold ETF with lower expense ratio than GLD' },
+  SLV:  { name:'iShares Silver Trust ETF',                    desc:'Tracks silver spot price' },
+  GDX:  { name:'VanEck Gold Miners ETF',                      desc:'Tracks major gold and silver mining companies' },
+  USO:  { name:'United States Oil Fund',                      desc:'Tracks WTI light crude oil futures price' },
+  DBA:  { name:'Invesco DB Agriculture Fund',                 desc:'Tracks wheat, corn, soybean and other agricultural futures' },
+  VNQ:  { name:'Vanguard Real Estate ETF',                    desc:'Tracks US Real Estate Investment Trusts (REITs)' },
+  IYR:  { name:'iShares U.S. Real Estate ETF',                desc:'Tracks Dow Jones US Real Estate Index' },
+  XLRE: { name:'Real Estate Select Sector SPDR ETF',          desc:'Tracks S&P 500 real estate sector' },
+  TQQQ: { name:'ProShares UltraPro QQQ (3× Long)',            desc:'Daily 3× leveraged exposure to Nasdaq 100' },
+  SQQQ: { name:'ProShares UltraPro Short QQQ (3× Short)',     desc:'Daily 3× inverse exposure to Nasdaq 100' },
+  SPXL: { name:'Direxion Daily S&P 500 Bull 3X Shares',       desc:'Daily 3× leveraged exposure to S&P 500' },
+  SPXS: { name:'Direxion Daily S&P 500 Bear 3X Shares',       desc:'Daily 3× inverse exposure to S&P 500' },
+  VT:   { name:'Vanguard Total World Stock ETF',              desc:'Covers 9,000+ stocks across 47 global markets' },
+  ACWI: { name:'iShares MSCI ACWI ETF',                       desc:'Tracks MSCI All Country World Index, developed & emerging markets' },
+  EFA:  { name:'iShares MSCI EAFE ETF',                       desc:'Tracks developed market stocks outside the US' },
+  IXUS: { name:'iShares Core MSCI Total International ETF',   desc:'Broadly diversified global investment outside the US' },
+  EEM:  { name:'iShares MSCI Emerging Markets ETF',           desc:'Covers China, India, Brazil and other emerging markets' },
+  VWO:  { name:'Vanguard FTSE Emerging Markets ETF',          desc:'Lower-cost emerging market index fund' },
+  IEMG: { name:'iShares Core MSCI Emerging Markets ETF',      desc:'Covers more small/mid-cap emerging market stocks than EEM' },
+  DEM:  { name:'WisdomTree Emerging Markets High Dividend ETF', desc:'Tracks high-dividend stocks in emerging markets' },
+  FXI:  { name:'iShares China Large-Cap ETF',                 desc:'Tracks 50 of China\'s largest H-shares and red chips' },
+  KWEB: { name:'KraneShares CSI China Internet ETF',          desc:'Focuses on US-listed Chinese internet companies' },
+  MCHI: { name:'iShares MSCI China ETF',                      desc:'Broadly tracks the MSCI China Index' },
+  CQQQ: { name:'Invesco China Technology ETF',                desc:'Tracks Chinese technology, media and telecom stocks' },
+  EWJ:  { name:'iShares MSCI Japan ETF',                      desc:'Tracks Japanese large and mid-cap listed stocks' },
+  DXJ:  { name:'WisdomTree Japan Hedged Equity Fund',         desc:'Invests in Japanese stocks while hedging yen exposure' },
+  DBJP: { name:'Xtrackers MSCI Japan Hedged Equity ETF',      desc:'Tracks MSCI Japan Index with currency hedging' },
+  EWH:  { name:'iShares MSCI Hong Kong ETF',                  desc:'Tracks large-cap stocks listed on the Hong Kong exchange' },
+  EWY:  { name:'iShares MSCI South Korea ETF',                desc:'Tracks large and mid-cap South Korean listed stocks' },
+  EWT:  { name:'iShares MSCI Taiwan ETF',                     desc:'Tracks large and mid-cap Taiwanese listed stocks' },
+  EWA:  { name:'iShares MSCI Australia ETF',                  desc:'Tracks large and mid-cap Australian listed stocks' },
+  VGK:  { name:'Vanguard FTSE Europe ETF',                    desc:'Tracks large and mid-cap European developed market stocks' },
+  EZU:  { name:'iShares MSCI Eurozone ETF',                   desc:'Tracks developed market stocks in the Eurozone' },
+  EWG:  { name:'iShares MSCI Germany ETF',                    desc:'Tracks large and mid-cap German listed stocks' },
+  EWU:  { name:'iShares MSCI United Kingdom ETF',             desc:'Tracks large and mid-cap UK listed stocks' },
+  ILF:  { name:'iShares Latin America 40 ETF',                desc:'Tracks the 40 largest stocks in Latin America' },
+  EWZ:  { name:'iShares MSCI Brazil ETF',                     desc:'Tracks large and mid-cap Brazilian listed stocks' },
+  EWW:  { name:'iShares MSCI Mexico ETF',                     desc:'Tracks large and mid-cap Mexican listed stocks' },
+};
+
 /* ── State ───────────────────────────────────────── */
 let activeGroupId = 'asset';
 let activeCatId   = 'us_index';
@@ -376,6 +469,9 @@ function renderGrid() {
 }
 
 function cardHTML(etf, data) {
+  const en    = ETF_EN[etf.sym];
+  const name  = currentLang === 'en' ? (en?.name || etf.name) : etf.name;
+  const desc  = currentLang === 'en' ? (en?.desc || etf.desc) : etf.desc;
   const priceInner = data
     ? fmt$(data.price)
     : `<span class="sk" style="width:66px;height:13px;border-radius:3px"></span>`;
@@ -384,10 +480,10 @@ function cardHTML(etf, data) {
     : `<span class="sk" style="width:50px;height:20px;border-radius:5px"></span>`;
 
   return `
-<a href="detail.html?symbol=${encodeURIComponent(etf.sym)}&type=etf&name=${encodeURIComponent(etf.name)}" class="etf-card">
+<a href="detail.html?symbol=${encodeURIComponent(etf.sym)}&type=etf&name=${encodeURIComponent(name)}" class="etf-card">
   <div class="etf-card-sym">${etf.sym}</div>
-  <div class="etf-card-name">${etf.name}</div>
-  <div class="etf-card-desc">${etf.desc}</div>
+  <div class="etf-card-name">${name}</div>
+  <div class="etf-card-desc">${desc}</div>
   <div class="etf-card-bottom">
     <div class="etf-card-price" id="ep-${etf.sym}">${priceInner}</div>
     <div id="ec-${etf.sym}">${chgInner}</div>
@@ -455,16 +551,21 @@ function updateCard(sym, data) {
 function setStatus(text) { $('loadStatus').textContent = text; }
 
 /* ── Boot ────────────────────────────────────────── */
-applyLang();
-updateWlBadge();
-renderAll();
+applyLang(); applyTheme();
+(async () => {
+  await initAuth();
+  await wlInit();
+  renderAll();
+})();
 
 document.querySelectorAll('.lang-toggle button').forEach(b => {
   b.addEventListener('click', () => {
     setLang(b.dataset.lang);
+    applyTheme();
     renderAll();
   });
 });
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 </script>
 </body>
 </html>

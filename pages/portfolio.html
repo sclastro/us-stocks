@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
+<script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -16,16 +17,17 @@
   <div class="nav-inner">
     <a class="logo" href="quote.html">
       <div class="logo-mark" aria-hidden="true"></div>
-      <span><b>Stock</b><span class="dim">Lens</span></span>
+      <span data-i18n="logo_name"><b>Stock</b><span class="dim">Lens</span></span>
     </a>
     <div class="nav-tabs">
       <a href="quote.html"     class="nav-tab"        data-i18n="nav_quote">股票查詢</a>
       <a href="etf.html"       class="nav-tab"        data-i18n="nav_etf">ETF</a>
       <a href="indices.html"   class="nav-tab"        data-i18n="nav_indices">環球指數</a>
       <a href="watchlist.html" class="nav-tab">
-        <span data-i18n="nav_watchlist">自選清單</span> <span class="wl-badge" id="wlBadge" hidden>0</span>
+        <span data-i18n="nav_watchlist">自選清單</span>
+        <span class="wl-badge" id="wlBadge" hidden>0</span>
       </a>
-      <a href="portfolio.html" class="nav-tab active"  data-i18n="nav_portfolio">持倉</a>
+      <a href="portfolio.html" class="nav-tab active" data-i18n="nav_portfolio">持倉</a>
     </div>
     <div class="nav-right">
       <span class="mkt-pill"><span class="dot"></span><span data-i18n="market_open">市場開市</span></span>
@@ -33,18 +35,182 @@
         <button type="button" data-lang="zh">繁中</button>
         <button type="button" data-lang="en">EN</button>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙</button>
       <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+      <a href="login.html" class="nav-login-btn" id="navLoginBtn" data-i18n="nav_login">登入</a>
+      <div class="nav-user-wrap" id="navUserWrap" hidden>
+        <span class="nav-user-name" id="navUserName"></span>
+        <button class="nav-logout-btn" id="navLogoutBtn" type="button" data-i18n="nav_logout">登出</button>
+      </div>
     </div>
   </div>
 </nav>
 
 <main>
-  <div class="coming-soon">
-    <span class="cs-icon">💼</span>
-    <div class="cs-title" data-i18n="coming_soon">敬請期待</div>
-    <div class="cs-desc" data-i18n="coming_soon_desc">此功能正在開發中，即將推出。</div>
+  <!-- Page head -->
+  <div class="pf-page-head">
+    <div>
+      <h1 data-i18n="pf_page_title">持倉追蹤</h1>
+      <div class="pf-sub" data-i18n="pf_subtitle">追蹤你的投資回報</div>
+    </div>
+    <div class="pf-actions">
+      <span class="pf-status" id="pfStatus"></span>
+      <button class="pf-add-btn" id="addBtn" data-i18n="pf_add">+ 新增持倉</button>
+    </div>
+  </div>
+
+  <!-- Guest mode chip -->
+  <div class="pf-guest-note">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span data-i18n="pf_guest_note">Guest 模式 · 資料儲存於本機</span>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="pf-summary" id="pfSummary" hidden>
+    <div class="pf-sum-card">
+      <div class="pf-sum-label" data-i18n="pf_total_cost">總投入</div>
+      <div class="pf-sum-val" id="sumCost">—</div>
+    </div>
+    <div class="pf-sum-card">
+      <div class="pf-sum-label" data-i18n="pf_total_value">總市值</div>
+      <div class="pf-sum-val" id="sumValue">—</div>
+    </div>
+    <div class="pf-sum-card">
+      <div class="pf-sum-label" data-i18n="pf_total_pnl">總盈虧</div>
+      <div class="pf-sum-val" id="sumPnl">—</div>
+    </div>
+    <div class="pf-sum-card">
+      <div class="pf-sum-label" data-i18n="pf_total_return">總回報</div>
+      <div class="pf-sum-val" id="sumReturn">—</div>
+    </div>
+  </div>
+
+  <!-- Portfolio Chart -->
+  <div class="pf-chart-section" id="pfChartSection" hidden>
+    <div class="pf-chart-head">
+      <div class="pf-chart-title" data-i18n="pf_chart_title">投資組合走勢</div>
+      <div class="pf-range-btns">
+        <button class="pf-range-btn" data-range="3mo" type="button">3M</button>
+        <button class="pf-range-btn" data-range="6mo" type="button">6M</button>
+        <button class="pf-range-btn active" data-range="1y" type="button">1Y</button>
+        <button class="pf-range-btn" data-range="2y" type="button">2Y</button>
+      </div>
+    </div>
+    <div class="pf-chart-wrap" id="pfChartWrap">
+      <div class="pf-chart-status" id="pfChartStatus"></div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="pfEmpty" hidden>
+    <div class="state-card">
+      <div class="state-ico">💼</div>
+      <div class="state-ttl" data-i18n="pf_empty">持倉為空</div>
+      <div class="state-desc" data-i18n="pf_empty_sub">點擊「新增持倉」開始記錄你的投資</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div id="pfTable" class="pf-table" hidden>
+    <div class="pf-table-head">
+      <span data-i18n="pf_col_sym">股票</span>
+      <span class="col-r"          data-i18n="pf_col_shares">股數</span>
+      <span class="col-r pf-th-buy"   data-i18n="pf_col_buy">買入價</span>
+      <span class="col-r pf-th-price" data-i18n="pf_col_price">現價</span>
+      <span class="col-r pf-th-value" data-i18n="pf_col_value">市值</span>
+      <span class="col-r pf-th-pnl"   data-i18n="pf_col_pnl">盈虧</span>
+      <span class="col-r"          data-i18n="pf_col_pnl_pct">盈虧%</span>
+      <span class="col-r pf-th-alloc" data-i18n="pf_col_alloc">佔比</span>
+      <span></span>
+    </div>
+    <div id="pfRows"></div>
+  </div>
+
+  <!-- Realized P&L section -->
+  <div class="pf-realized-section" id="realizedSection" hidden>
+    <div class="pf-realized-head">
+      <div class="pf-realized-title" data-i18n="pf_realized_title">已實現盈虧</div>
+      <span class="pf-realized-total-wrap">
+        <span class="pf-sum-label" data-i18n="pf_realized_total">已實現總盈虧</span>
+        <span id="realizedTotal" class="pf-sum-val"></span>
+      </span>
+    </div>
+    <div class="pf-table">
+      <div class="pf-table-head pf-realized-thead">
+        <span data-i18n="pf_col_sym">股票</span>
+        <span class="col-r" data-i18n="pf_col_shares">股數</span>
+        <span class="col-r pf-realized-c-avg" data-i18n="pf_col_avg_cost">成本價</span>
+        <span class="col-r" data-i18n="pf_col_sell_price">賣出價</span>
+        <span class="col-r pf-realized-c-pnl" data-i18n="pf_col_pnl">盈虧</span>
+        <span class="col-r" data-i18n="pf_col_pnl_pct">盈虧%</span>
+        <span></span>
+      </div>
+      <div id="realizedRows"></div>
+    </div>
   </div>
 </main>
+
+<!-- Add Position Modal -->
+<div class="pf-modal-overlay" id="addModal" hidden>
+  <div class="pf-modal">
+    <div class="pf-modal-title" data-i18n="pf_add_title">新增持倉</div>
+    <form class="pf-form" id="addForm" novalidate>
+      <div class="pf-field">
+        <label data-i18n="pf_sym">股票代碼</label>
+        <input type="text" id="fSym" data-i18n-ph="pf_sym_ph" placeholder="例如 AAPL"
+               autocomplete="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="pf-field">
+        <label data-i18n="pf_shares">股數</label>
+        <input type="number" id="fShares" placeholder="0" min="0.0001" step="any">
+      </div>
+      <div class="pf-field">
+        <label data-i18n="pf_buy_price">買入價</label>
+        <input type="number" id="fBuyPrice" placeholder="0.00" min="0.0001" step="any">
+      </div>
+      <div class="pf-field">
+        <label data-i18n="pf_buy_date">買入日期</label>
+        <input type="date" id="fBuyDate">
+      </div>
+      <div class="pf-form-err" id="addErr"></div>
+      <div class="pf-modal-btns">
+        <button type="button" class="pf-cancel-btn" id="cancelBtn" data-i18n="pf_cancel">取消</button>
+        <button type="submit" class="pf-submit-btn" data-i18n="pf_confirm">確認</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Sell Modal -->
+<div class="pf-modal-overlay" id="sellModal" hidden>
+  <div class="pf-modal">
+    <div class="pf-modal-title" data-i18n="pf_sell_title">記錄賣出</div>
+    <form class="pf-form" id="sellForm" novalidate>
+      <div class="pf-field">
+        <label data-i18n="pf_sym">股票代碼</label>
+        <input type="text" id="sSym" readonly style="opacity:.65;cursor:default">
+      </div>
+      <div class="pf-field">
+        <label data-i18n="pf_shares">股數</label>
+        <input type="number" id="sShares" min="0.0001" step="any">
+      </div>
+      <div class="pf-field">
+        <label data-i18n="pf_sell_price">賣出價</label>
+        <input type="number" id="sSellPrice" placeholder="0.00" min="0.0001" step="any">
+      </div>
+      <div class="pf-field">
+        <label data-i18n="pf_sell_date">賣出日期</label>
+        <input type="date" id="sSellDate">
+      </div>
+      <div class="pf-form-note" data-i18n="pf_sell_note">僅記錄已實現盈虧，不會自動修改持倉。</div>
+      <div class="pf-form-err" id="sellErr"></div>
+      <div class="pf-modal-btns">
+        <button type="button" class="pf-cancel-btn" id="sellCancelBtn" data-i18n="pf_cancel">取消</button>
+        <button type="submit" class="pf-submit-btn" data-i18n="pf_confirm">確認</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <footer>
   <div data-i18n="footer_left">StockLens · 僅供研究及教育用途，不構成投資建議。</div>
@@ -55,7 +221,7 @@
 <nav class="bottom-nav">
   <a href="quote.html"     class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>查詢</span>
+    <span data-i18n="bn_quote">查詢</span>
   </a>
   <a href="etf.html"       class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -63,26 +229,564 @@
   </a>
   <a href="indices.html"   class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
-    <span>指數</span>
+    <span data-i18n="bn_indices">指數</span>
   </a>
   <a href="watchlist.html" class="bn-item">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span>自選</span>
+    <span data-i18n="bn_watchlist">自選</span>
   </a>
   <a href="portfolio.html" class="bn-item active">
     <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-    <span>持倉</span>
+    <span data-i18n="bn_portfolio">持倉</span>
   </a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/api.js"></script>
 <script>
-applyLang();
-updateWlBadge();
+'use strict';
+
+const $ = id => document.getElementById(id);
+
+/* P&L formatter: +$450.00 / -$123.45 */
+const fmtPnl = n => {
+  const abs = Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return (n > 0 ? '+$' : n < 0 ? '-$' : '$') + abs;
+};
+const fmtPct = n => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+const fmtShares = n => n % 1 === 0 ? n.toLocaleString() : n.toString();
+
+/* ── Live price cache ────────────────────────────── */
+const priceCache = {};
+
+/* ── Portfolio chart state ───────────────────────── */
+let _pfChart        = null;
+let _pfSeries       = null;
+let _pfChartRange   = '1y';
+let _pfChartRO      = null;
+let _currentLots    = [];
+
+/* ── Boot ────────────────────────────────────────── */
+applyLang(); applyTheme();
+setDefaultDate();
+
+(async () => {
+  await initAuth();
+  await wlInit();
+  _updatePfNote();
+  await renderPage();
+})();
+
 document.querySelectorAll('.lang-toggle button').forEach(b => {
-  b.addEventListener('click', () => setLang(b.dataset.lang));
+  b.addEventListener('click', () => { setLang(b.dataset.lang); applyTheme(); _updatePfNote(); renderPage(); });
 });
+document.getElementById('themeToggle').addEventListener('click', () => {
+  toggleTheme();
+  if (_currentLots && _currentLots.length > 0) renderPfChart(_pfChartRange, _currentLots);
+});
+document.querySelectorAll('.pf-range-btn').forEach(btn => {
+  btn.addEventListener('click', () => renderPfChart(btn.dataset.range, _currentLots));
+});
+$('addBtn').addEventListener('click', openAddModal);
+$('cancelBtn').addEventListener('click', closeAddModal);
+$('addModal').addEventListener('click', e => { if (e.target === $('addModal')) closeAddModal(); });
+$('addForm').addEventListener('submit', async e => { e.preventDefault(); await submitAdd(); });
+$('sellCancelBtn').addEventListener('click', closeSellModal);
+$('sellModal').addEventListener('click', e => { if (e.target === $('sellModal')) closeSellModal(); });
+$('sellForm').addEventListener('submit', async e => { e.preventDefault(); await submitSell(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeAddModal(); closeSellModal(); }
+});
+
+/* ── Auth state note ─────────────────────────────── */
+function _updatePfNote() {
+  const note = document.querySelector('.pf-guest-note');
+  if (!note) return;
+  if (isLoggedIn()) {
+    note.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span data-i18n="pf_cloud_note">${currentLang === 'zh' ? '已登入 · 資料同步至雲端' : 'Signed in · Data synced to cloud'}</span>`;
+  } else {
+    note.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-i18n="pf_guest_note">${currentLang === 'zh' ? 'Guest 模式 · 資料儲存於本機' : 'Guest mode · Data stored locally'}</span>`;
+  }
+}
+
+function setDefaultDate() {
+  $('fBuyDate').value = new Date().toISOString().slice(0, 10);
+}
+
+/* ── Render page ─────────────────────────────────── */
+async function renderPage() {
+  const [lots, sells] = await Promise.all([pfLoad(), sellLoad()]);
+  _currentLots = lots;
+  applyLang(); // re-apply in case lang changed
+
+  renderRealized(sells);
+
+  if (lots.length === 0) {
+    $('pfEmpty').hidden       = false;
+    $('pfTable').hidden       = true;
+    $('pfSummary').hidden     = true;
+    $('pfChartSection').hidden = true;
+    $('pfStatus').textContent = '';
+    return;
+  }
+
+  $('pfEmpty').hidden   = true;
+  $('pfTable').hidden   = false;
+  $('pfSummary').hidden = false;
+
+  /* Show cost immediately; value/pnl/return skeleton */
+  const totalCost = lots.reduce((s, l) => s + l.shares * l.buyPrice, 0);
+  $('sumCost').textContent = fmt$(totalCost);
+  $('sumValue').innerHTML  = sk('80px', '20px');
+  $('sumPnl').innerHTML    = sk('80px', '20px');
+  $('sumReturn').innerHTML = sk('60px', '20px');
+  $('sumPnl').className    = 'pf-sum-val';
+  $('sumReturn').className = 'pf-sum-val';
+
+  renderRows(lots);
+
+  const uniqueSyms = [...new Set(lots.map(l => l.sym))];
+  fetchAllPrices(uniqueSyms, lots);
+
+  /* Portfolio chart — async, non-blocking */
+  renderPfChart(_pfChartRange, lots);
+}
+
+/* ── Render rows (skeleton for unknown prices) ───── */
+function renderRows(lots) {
+  $('pfRows').innerHTML = lots.map(lot => rowHTML(lot, priceCache[lot.sym])).join('');
+
+  /* 賣出 → open sell modal */
+  $('pfRows').querySelectorAll('.pf-sell-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openSellModal({
+        id:       btn.dataset.id,
+        sym:      btn.dataset.sym,
+        shares:   parseFloat(btn.dataset.shares),
+        buyPrice: parseFloat(btn.dataset.buyprice),
+      });
+    });
+  });
+
+  /* × → show inline confirm (also hide sell btn) */
+  $('pfRows').querySelectorAll('.pf-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id      = btn.dataset.id;
+      const remCol  = document.getElementById(`pfrem-${id}`);
+      const row     = $('pfRows').querySelector(`.pf-row[data-id="${id}"]`);
+      const sellBtn = remCol.querySelector('.pf-sell-btn');
+      btn.hidden = true;
+      if (sellBtn) sellBtn.hidden = true;
+      remCol.querySelector('.pf-confirm-wrap').hidden = false;
+      if (row) row.classList.add('pf-row--confirming');
+    });
+  });
+
+  /* ✓ → confirm delete */
+  $('pfRows').querySelectorAll('.pf-c-yes').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await pfRemove(btn.dataset.id);
+      renderPage();
+    });
+  });
+
+  /* ✗ → cancel (restore sell btn) */
+  $('pfRows').querySelectorAll('.pf-c-no').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const remCol  = btn.closest('.pf-remove-col');
+      const row     = btn.closest('.pf-row');
+      const sellBtn = remCol.querySelector('.pf-sell-btn');
+      remCol.querySelector('.pf-remove').hidden = false;
+      remCol.querySelector('.pf-confirm-wrap').hidden = true;
+      if (sellBtn) sellBtn.hidden = false;
+      if (row) row.classList.remove('pf-row--confirming');
+    });
+  });
+}
+
+function rowHTML(lot, data) {
+  const price    = data?.price ?? null;
+  const priceStr = price !== null
+    ? fmt$(price)
+    : `<span class="sk" style="width:64px;height:14px;border-radius:3px"></span>`;
+
+  const cost      = lot.shares * lot.buyPrice;
+  const value     = price !== null ? lot.shares * price : null;
+  const pnl       = value !== null ? value - cost : null;
+  const pnlPct    = pnl !== null ? (pnl / cost * 100) : null;
+  const pnlClass  = pnl === null ? '' : pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
+
+  const valueStr  = value  !== null ? fmt$(value)      : '—';
+  const pnlStr    = pnl    !== null ? fmtPnl(pnl)      : '—';
+  const pnlPctStr = pnlPct !== null ? fmtPct(pnlPct)   : '—';
+
+  return `
+<div class="pf-row" data-id="${lot.id}">
+  <div class="pf-sym-col">
+    <div class="pf-sym-logo">${lot.sym.slice(0,2)}</div>
+    <div>
+      <div class="pf-sym-name">${esc(lot.sym)}</div>
+      <div class="pf-sym-date">${lot.buyDate}</div>
+    </div>
+  </div>
+  <div class="pf-shares-col col-r">${fmtShares(lot.shares)}</div>
+  <div class="pf-buy-col col-r pf-th-buy">${fmt$(lot.buyPrice)}</div>
+  <div class="pf-price-col col-r pf-th-price" id="pfprice-${lot.id}">${priceStr}</div>
+  <div class="pf-value-col col-r pf-th-value" id="pfval-${lot.id}">${valueStr}</div>
+  <div class="pf-pnl-col col-r pf-th-pnl ${pnlClass}" id="pfpnl-${lot.id}">${pnlStr}</div>
+  <div class="pf-pnlpct-col col-r ${pnlClass}" id="pfpct-${lot.id}">${pnlPctStr}</div>
+  <div class="pf-alloc-col col-r pf-th-alloc" id="pfalloc-${lot.id}">—</div>
+  <div class="pf-remove-col" id="pfrem-${lot.id}">
+    <button class="pf-sell-btn" data-id="${lot.id}" data-sym="${esc(lot.sym)}" data-shares="${lot.shares}" data-buyprice="${lot.buyPrice}" type="button">${currentLang==='zh'?'賣出':'Sell'}</button>
+    <button class="wl-remove pf-remove" data-id="${lot.id}" title="移除" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="pf-confirm-wrap" hidden>
+      <button class="pf-c-yes" data-id="${lot.id}" type="button" title="確認移除">✓</button>
+      <button class="pf-c-no" type="button" title="取消">✗</button>
+    </div>
+  </div>
+</div>`;
+}
+
+/* ── Fetch live prices (batch, 300ms apart) ──────── */
+async function fetchAllPrices(syms, lots) {
+  $('pfStatus').textContent = tr('pf_updating');
+  let done = 0;
+
+  for (const sym of syms) {
+    try {
+      const data = await API.getIndexQuote(sym);
+      priceCache[sym] = data;
+      updateRowsForSym(sym, lots);
+    } catch { /* skip: leave as skeleton */ }
+    done++;
+    $('pfStatus').textContent = `${tr('pf_updating')} ${done}/${syms.length}`;
+    if (done < syms.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  $('pfStatus').textContent = tr('pf_updated');
+  updateSummary(lots);
+  updateAllocations(lots);
+}
+
+function updateRowsForSym(sym, lots) {
+  const data = priceCache[sym];
+  if (!data) return;
+  lots.filter(l => l.sym === sym).forEach(lot => {
+    const priceEl = document.getElementById(`pfprice-${lot.id}`);
+    const valEl   = document.getElementById(`pfval-${lot.id}`);
+    const pnlEl   = document.getElementById(`pfpnl-${lot.id}`);
+    const pctEl   = document.getElementById(`pfpct-${lot.id}`);
+    if (!priceEl) return;
+
+    const cost  = lot.shares * lot.buyPrice;
+    const value = lot.shares * data.price;
+    const pnl   = value - cost;
+    const pnlPct = cost > 0 ? (pnl / cost * 100) : 0;
+    const cls   = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
+
+    priceEl.textContent = fmt$(data.price);
+    if (valEl)  valEl.textContent = fmt$(value);
+    if (pnlEl)  { pnlEl.textContent = fmtPnl(pnl);    pnlEl.className  = `pf-pnl-col col-r pf-th-pnl ${cls}`; }
+    if (pctEl)  { pctEl.textContent = fmtPct(pnlPct); pctEl.className  = `pf-pnlpct-col col-r ${cls}`; }
+  });
+}
+
+function updateSummary(lots) {
+  const totalCost  = lots.reduce((s, l) => s + l.shares * l.buyPrice, 0);
+  const totalValue = lots.reduce((s, l) => {
+    const p = priceCache[l.sym]?.price;
+    return s + (p != null ? l.shares * p : l.shares * l.buyPrice);
+  }, 0);
+  const pnl = totalValue - totalCost;
+  const ret = totalCost > 0 ? (pnl / totalCost * 100) : 0;
+  const cls = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
+
+  $('sumCost').textContent   = fmt$(totalCost);
+  $('sumValue').textContent  = fmt$(totalValue);
+  $('sumPnl').textContent    = fmtPnl(pnl);
+  $('sumPnl').className      = `pf-sum-val ${cls}`;
+  $('sumReturn').textContent = fmtPct(ret);
+  $('sumReturn').className   = `pf-sum-val ${cls}`;
+}
+
+function updateAllocations(lots) {
+  const totalValue = lots.reduce((s, l) => {
+    const p = priceCache[l.sym]?.price;
+    return s + (p != null ? l.shares * p : 0);
+  }, 0);
+  if (totalValue === 0) return;
+  lots.forEach(lot => {
+    const p = priceCache[lot.sym]?.price;
+    if (p == null) return;
+    const alloc = (lot.shares * p) / totalValue * 100;
+    const el = document.getElementById(`pfalloc-${lot.id}`);
+    if (el) el.textContent = alloc.toFixed(1) + '%';
+  });
+}
+
+/* ── Modal ───────────────────────────────────────── */
+function openAddModal() {
+  $('addErr').textContent = '';
+  $('fSym').value      = '';
+  $('fShares').value   = '';
+  $('fBuyPrice').value = '';
+  setDefaultDate();
+  applyLang(); // ensure placeholder is up to date
+  $('addModal').hidden = false;
+  setTimeout(() => $('fSym').focus(), 50);
+}
+
+function closeAddModal() {
+  $('addModal').hidden = true;
+}
+
+async function submitAdd() {
+  const sym      = $('fSym').value.trim().toUpperCase();
+  const shares   = parseFloat($('fShares').value);
+  const buyPrice = parseFloat($('fBuyPrice').value);
+  const buyDate  = $('fBuyDate').value;
+
+  $('addErr').textContent = '';
+
+  const errMsg = (zh, en) => currentLang === 'zh' ? zh : en;
+  if (!sym)               { $('addErr').textContent = errMsg('請輸入股票代碼', 'Please enter a ticker'); return; }
+  if (!shares || shares <= 0) { $('addErr').textContent = errMsg('請輸入有效股數', 'Please enter valid shares'); return; }
+  if (!buyPrice || buyPrice <= 0) { $('addErr').textContent = errMsg('請輸入有效買入價', 'Please enter a valid price'); return; }
+  if (!buyDate)           { $('addErr').textContent = errMsg('請選擇買入日期', 'Please select a date'); return; }
+
+  await pfAdd({ sym, shares, buyPrice, buyDate });
+
+  closeAddModal();
+  renderPage();
+}
+
+/* ── Sell Modal ──────────────────────────────────── */
+let _currentSellLot = null;
+
+function openSellModal(lot) {
+  _currentSellLot = lot;
+  $('sSym').value       = lot.sym;
+  $('sShares').value    = lot.shares;
+  $('sSellPrice').value = '';
+  $('sSellDate').value  = new Date().toISOString().slice(0, 10);
+  $('sellErr').textContent = '';
+  applyLang();
+  $('sellModal').hidden = false;
+  setTimeout(() => $('sSellPrice').focus(), 50);
+}
+
+function closeSellModal() {
+  $('sellModal').hidden = true;
+  _currentSellLot = null;
+}
+
+async function submitSell() {
+  const shares    = parseFloat($('sShares').value);
+  const sellPrice = parseFloat($('sSellPrice').value);
+  const sellDate  = $('sSellDate').value;
+
+  $('sellErr').textContent = '';
+
+  const errMsg = (zh, en) => currentLang === 'zh' ? zh : en;
+  if (!shares || shares <= 0)    { $('sellErr').textContent = errMsg('請輸入有效股數', 'Please enter valid shares'); return; }
+  if (!sellPrice || sellPrice <= 0) { $('sellErr').textContent = errMsg('請輸入有效賣出價', 'Please enter a valid sell price'); return; }
+  if (!sellDate)                 { $('sellErr').textContent = errMsg('請選擇賣出日期', 'Please select a date'); return; }
+
+  await sellAdd({
+    sym:       _currentSellLot.sym,
+    shares:    shares,
+    sellPrice: sellPrice,
+    avgCost:   _currentSellLot.buyPrice,
+    sellDate:  sellDate,
+  });
+
+  closeSellModal();
+  renderPage();
+}
+
+/* ── Portfolio Chart ─────────────────────────────── */
+function tsToDateStr(ts) {
+  const d = new Date(ts * 1000);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dy = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dy}`;
+}
+
+function pfChartColors() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  return {
+    bg:     dark ? '#1c1c1b' : '#ffffff',
+    text:   dark ? '#8a857d' : '#6b6862',
+    grid:   dark ? '#2e2d2b' : '#f0ede8',
+    border: dark ? '#2e2d2b' : '#e8e6e0',
+    line:   dark ? '#4caf73' : '#2f7a52',
+    top:    dark ? 'rgba(76,175,115,0.20)' : 'rgba(47,122,82,0.15)',
+    bot:    'rgba(0,0,0,0)',
+  };
+}
+
+function _pfChartInit(wrap) {
+  if (_pfChart)  { _pfChart.remove();       _pfChart = null; _pfSeries = null; }
+  if (_pfChartRO){ _pfChartRO.disconnect(); _pfChartRO = null; }
+
+  const c = pfChartColors();
+  _pfChart = LightweightCharts.createChart(wrap, {
+    width:  wrap.clientWidth || 600,
+    height: 200,
+    layout: { background: { color: c.bg }, textColor: c.text },
+    grid:   { vertLines: { color: c.grid }, horzLines: { color: c.grid } },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: c.border },
+    timeScale: { borderColor: c.border, timeVisible: false },
+  });
+
+  _pfSeries = _pfChart.addAreaSeries({
+    lineColor:   c.line,
+    topColor:    c.top,
+    bottomColor: c.bot,
+    lineWidth: 2,
+    priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+  });
+
+  _pfChartRO = new ResizeObserver(() => {
+    if (_pfChart && wrap.clientWidth > 0)
+      _pfChart.applyOptions({ width: wrap.clientWidth });
+  });
+  _pfChartRO.observe(wrap);
+}
+
+async function renderPfChart(range, lots) {
+  const section = $('pfChartSection');
+  if (!lots || lots.length === 0) { section.hidden = true; return; }
+  section.hidden = false;
+
+  /* Highlight active range btn */
+  document.querySelectorAll('.pf-range-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.range === range);
+  });
+
+  const status = $('pfChartStatus');
+  status.textContent    = tr('pf_chart_loading');
+  status.style.display  = '';
+  _pfChartRange = range;
+
+  try {
+    const syms     = [...new Set(lots.map(l => l.sym))];
+    const interval = (range === '2y') ? '1wk' : '1d';
+
+    /* Fetch all histories in parallel */
+    const histMap = {};
+    await Promise.all(syms.map(async sym => {
+      try {
+        const bars = await API.getHistory(sym, range, interval);
+        const seen = new Set();
+        histMap[sym] = new Map(
+          bars
+            .filter(b => { const d = tsToDateStr(b.time); if (seen.has(d)) return false; seen.add(d); return true; })
+            .map(b => [tsToDateStr(b.time), b.close])
+        );
+      } catch(e) { console.warn('[pfChart]', sym, e); }
+    }));
+
+    /* Union of trading dates, sorted ascending */
+    const allDates = [...new Set(
+      Object.values(histMap).flatMap(m => [...m.keys()])
+    )].sort();
+
+    if (!allDates.length) { status.textContent = '—'; return; }
+
+    /* Forward-fill prices and compute daily portfolio value */
+    const lastPx = {};
+    const chartData = [];
+    for (const date of allDates) {
+      for (const [sym, map] of Object.entries(histMap)) {
+        if (map.has(date)) lastPx[sym] = map.get(date);
+      }
+      let value = 0, hasAny = false;
+      for (const lot of lots) {
+        if (lot.buyDate > date) continue;   /* lot not yet purchased */
+        const px = lastPx[lot.sym];
+        if (px != null) { value += lot.shares * px; hasAny = true; }
+      }
+      if (hasAny) chartData.push({ time: date, value });
+    }
+
+    if (!chartData.length) { status.textContent = '—'; return; }
+
+    _pfChartInit($('pfChartWrap'));
+    _pfSeries.setData(chartData);
+    _pfChart.timeScale().fitContent();
+    status.style.display = 'none';
+
+  } catch(e) {
+    console.error('[pfChart]', e);
+    status.textContent = '—';
+  }
+}
+
+/* ── Realized P&L section ────────────────────────── */
+function renderRealized(sells) {
+  const section = $('realizedSection');
+  if (!sells || sells.length === 0) {
+    section.hidden = true;
+    return;
+  }
+
+  section.hidden = false;
+  applyLang();
+
+  /* Total realized P&L */
+  const totalPnl = sells.reduce((s, r) => s + (r.sellPrice - r.avgCost) * r.shares, 0);
+  const totCls   = totalPnl > 0 ? 'up' : totalPnl < 0 ? 'dn' : '';
+  $('realizedTotal').textContent = fmtPnl(totalPnl);
+  $('realizedTotal').className   = `pf-sum-val ${totCls}`;
+
+  /* Rows */
+  $('realizedRows').innerHTML = sells.map(s => {
+    const pnl    = (s.sellPrice - s.avgCost) * s.shares;
+    const pnlPct = s.avgCost > 0 ? ((s.sellPrice / s.avgCost - 1) * 100) : 0;
+    const cls    = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
+    return `
+<div class="pf-realized-row">
+  <div class="pf-sym-col">
+    <div class="pf-sym-logo">${esc(s.sym).slice(0,2)}</div>
+    <div>
+      <div class="pf-sym-name">${esc(s.sym)}</div>
+      <div class="pf-sym-date">${s.sellDate}</div>
+    </div>
+  </div>
+  <div class="col-r">${fmtShares(s.shares)}</div>
+  <div class="col-r col-muted pf-realized-c-avg">${fmt$(s.avgCost)}</div>
+  <div class="col-r">${fmt$(s.sellPrice)}</div>
+  <div class="col-r ${cls} pf-realized-c-pnl">${fmtPnl(pnl)}</div>
+  <div class="col-r ${cls}">${fmtPct(pnlPct)}</div>
+  <div class="pf-remove-col">
+    <button class="wl-remove pf-sell-del" data-id="${s.id}" title="${currentLang==='zh'?'刪除記錄':'Delete record'}" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+</div>`;
+  }).join('');
+
+  /* Delete sell record */
+  $('realizedRows').querySelectorAll('.pf-sell-del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sellRemove(btn.dataset.id);
+      const updated = await sellLoad();
+      renderRealized(updated);
+    });
+  });
+}
 </script>
 </body>
 </html>

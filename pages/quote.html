@@ -16,7 +16,7 @@
   <div class="nav-inner">
     <a class="logo" href="quote.html">
       <div class="logo-mark" aria-hidden="true"></div>
-      <span><b>Stock</b><span class="dim">Lens</span></span>
+      <span data-i18n="logo_name"><b>Stock</b><span class="dim">Lens</span></span>
     </a>
     <div class="nav-tabs">
       <a href="quote.html"     class="nav-tab active" data-i18n="nav_quote">股票查詢</a>
@@ -33,7 +33,13 @@
         <button type="button" data-lang="zh">繁中</button>
         <button type="button" data-lang="en">EN</button>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙</button>
       <span class="nav-powered"><span data-i18n="powered_by">技術提供</span> <b>Finnhub</b></span>
+      <a href="login.html" class="nav-login-btn" id="navLoginBtn" data-i18n="nav_login">登入</a>
+      <div class="nav-user-wrap" id="navUserWrap" hidden>
+        <span class="nav-user-name" id="navUserName"></span>
+        <button class="nav-logout-btn" id="navLogoutBtn" type="button" data-i18n="nav_logout">登出</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -62,6 +68,8 @@
       <span class="chip" data-sym="AMZN">AMZN</span>
       <span class="chip" data-sym="META">META</span>
     </div>
+    <!-- Recent searches -->
+    <div class="recent-row" id="recentRow" hidden></div>
   </section>
 
   <!-- Error -->
@@ -84,7 +92,7 @@
 <nav class="bottom-nav">
   <a href="quote.html"     class="bn-item active">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>查詢</span>
+    <span data-i18n="bn_quote">查詢</span>
   </a>
   <a href="etf.html"       class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -92,20 +100,24 @@
   </a>
   <a href="indices.html"   class="bn-item">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18M3 12h18"/></svg>
-    <span>指數</span>
+    <span data-i18n="bn_indices">指數</span>
   </a>
   <a href="watchlist.html" class="bn-item">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span>自選</span>
+    <span data-i18n="bn_watchlist">自選</span>
   </a>
   <a href="portfolio.html" class="bn-item">
     <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-    <span>持倉</span>
+    <span data-i18n="bn_portfolio">持倉</span>
   </a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/data.js"></script>
 <script src="../js/api.js"></script>
 <script>
 'use strict';
@@ -113,17 +125,22 @@
 const $ = id => document.getElementById(id);
 
 /* ── Boot ────────────────────────────────────────── */
-applyLang();
-updateWlBadge();
-fetchChipQuotes();
+applyLang(); applyTheme();
+renderRecent();
+(async () => {
+  await initAuth();
+  await wlInit();
+  fetchChipQuotes();
+})();
 
 $('sym-input').addEventListener('input',   e => { e.target.value = e.target.value.toUpperCase(); });
 $('sym-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 $('srch-btn').addEventListener('click', doSearch);
 
 document.querySelectorAll('.lang-toggle button').forEach(b => {
-  b.addEventListener('click', () => setLang(b.dataset.lang));
+  b.addEventListener('click', () => { setLang(b.dataset.lang); applyTheme(); renderRecent(); });
 });
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
 document.querySelectorAll('.chip').forEach(c => {
   c.addEventListener('click', () => qs(c.dataset.sym));
@@ -152,6 +169,35 @@ async function fetchChipQuotes() {
   }
 }
 
+/* ── Recent searches ─────────────────────────────── */
+function renderRecent() {
+  const row = $('recentRow');
+  const items = loadRecent();
+  if (items.length === 0) { row.hidden = true; return; }
+  row.hidden = false;
+  row.innerHTML =
+    `<span class="hlabel" data-i18n="recent">${tr('recent')}</span>` +
+    items.map(sym =>
+      `<span class="recent-chip" data-sym="${sym}">
+        <span class="rc-sym">${sym}</span>
+        <span class="rc-x" data-del="${sym}" title="${tr('recent_clear')}">✕</span>
+      </span>`
+    ).join('') +
+    `<button class="recent-clear" id="recentClearBtn">${tr('recent_clear')}</button>`;
+
+  row.querySelectorAll('.recent-chip').forEach(chip => {
+    chip.addEventListener('click', e => {
+      if (e.target.classList.contains('rc-x')) {
+        removeRecent(e.target.dataset.del);
+        renderRecent();
+      } else {
+        qs(chip.dataset.sym);
+      }
+    });
+  });
+  $('recentClearBtn').addEventListener('click', () => { clearRecent(); renderRecent(); });
+}
+
 /* ── Search ──────────────────────────────────────── */
 function qs(sym) { $('sym-input').value = sym; doSearch(); }
 
@@ -168,6 +214,7 @@ function doSearch() {
   }
 
   $('st-err').hidden = true;
+  saveRecent(sym);   // ← 儲存搜尋記錄
   window.location.href = `detail.html?symbol=${encodeURIComponent(sym)}&type=stock&name=${encodeURIComponent(sym)}`;
 }
 </script>
